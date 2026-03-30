@@ -1,4 +1,4 @@
-import 'package:gyawun_metadata_plugin/src/plugin_api/metadata_plugin_api.dart';
+import 'package:gyawun_metadata_plugin/plugin_api/metadata_plugin_api.dart';
 
 class MyPlugin implements IMetadataPlugin {
   @override

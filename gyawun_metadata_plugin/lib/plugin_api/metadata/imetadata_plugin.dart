@@ -4,7 +4,7 @@
 //This is useful to avoid circular dependencies and to keep the plugin API
 //independent from the main application.
 
-import 'package:gyawun_metadata_plugin/src/plugin_api/metadata_plugin_api.dart';
+import 'package:gyawun_metadata_plugin/plugin_api/metadata_plugin_api.dart';
 
 abstract class IMetadataPlugin {
   IArtist get artist;

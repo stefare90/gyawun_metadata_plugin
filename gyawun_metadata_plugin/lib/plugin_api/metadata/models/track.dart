@@ -1,4 +1,4 @@
-import 'package:gyawun_metadata_plugin/src/plugin_api/metadata/models.dart';
+import 'package:gyawun_metadata_plugin/plugin_api/metadata/models.dart';
 
 class Track {
   final String id;
