@@ -1,0 +1,10 @@
+export 'metadata/imetadata_plugin.dart';
+export 'metadata/iauth.dart';
+export 'metadata/ialbum.dart';
+export 'metadata/iartist.dart';
+export 'metadata/ibrowse.dart';
+export 'metadata/icore.dart';
+export 'metadata/iplaylist.dart';
+export 'metadata/isearch.dart';
+export 'metadata/itrack.dart';
+export 'metadata/iuser.dart';
