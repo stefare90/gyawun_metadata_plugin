@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "name": "Alphanumeric plugin name with hyphens or underscore",
+  "author": "Your Name",
+  "description": "A brief description of the plugin's functionality.",
+  "entryPoint": "MusicbrainzPlugin",
+  "apis": ["webview", "localstorage", "timezone"],
+  "abilities": ["authentication", "scrobbling", "metadata", "audioSource"],
+  "repository": "https://github.com/xxx/xxx",
+  "pluginApiVersion": "1.0.0"
+}
