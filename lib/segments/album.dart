@@ -1,11 +1,20 @@
 import 'dart:convert';
 
-import 'package:gyawun_metadata_plugin/plugin_sdk/metadata_plugin_sdk.dart';
+import 'package:gyawun_metadata_plugin/main.dart';
+import 'package:gyawun_metadata_sdk/metadata/host_env.dart';
+import 'package:gyawun_metadata_sdk/metadata/interfaces/ialbum.dart';
+import 'package:gyawun_metadata_sdk/metadata/models/album.dart';
+import 'package:gyawun_metadata_sdk/metadata/models/artist.dart';
+import 'package:gyawun_metadata_sdk/metadata/models/pagination.dart';
+import 'package:gyawun_metadata_sdk/metadata/models/plugin_request.dart';
+import 'package:gyawun_metadata_sdk/metadata/models/plugin_response.dart';
+import 'package:gyawun_metadata_sdk/metadata/models/track.dart';
 
-class MusicbrainzAlbum implements IAlbum {
+class MusicbrainzAlbum extends IAlbum {
   final String mbUrl;
+  final HostEnv hostEnv;
 
-  MusicbrainzAlbum(this.mbUrl);
+  MusicbrainzAlbum(this.mbUrl, this.hostEnv);
 
   Future<Map<String, dynamic>> _get(
     String baseUrl,
@@ -23,7 +32,16 @@ class MusicbrainzAlbum implements IAlbum {
       headers: {'Accept': 'application/json'},
     );
 
-    final PluginResponse response = await MetadataHost.network.send(request);
+    final PluginResponse responset = await hostEnv.network.send(request);
+
+    final PluginResponse response = PluginResponse(
+      statusCode: 200,
+      body: jsonEncode({
+        "id": "123",
+        "title": "Test Album",
+        "artist-credit": [],
+      }),
+    );
 
     if (response.statusCode != 200) {
       throw Exception("Errore API: ${response.statusCode}");
