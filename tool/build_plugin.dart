@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:dart_eval/dart_eval.dart';
 import 'package:gyawun_metadata_sdk/eval/eval_plugin.dart';
@@ -10,42 +9,6 @@ void main() async {
   // 1. Configure bridge bindings for compilation
   final metadataBridge = GyawunMetadataSdkPlugin();
   compiler.addPlugin(metadataBridge);
-
-  print('--- Analyzing Dart environment ---');
-
-  final packageConfigFile = File('.dart_tool/package_config.json');
-  if (!packageConfigFile.existsSync()) {
-    print('❌ Error: Please run "dart pub get" first');
-    return;
-  }
-
-  final config = jsonDecode(packageConfigFile.readAsStringSync());
-  final packages = config['packages'] as List;
-
-  String? sdkPath;
-  for (var pkg in packages) {
-    if (pkg['name'] == 'gyawun_metadata_sdk') {
-      final rootUriString = pkg['rootUri'] as String;
-
-      // Logic: Resolve the relative path starting from the .dart_tool/ folder
-      final configDir = packageConfigFile.parent.path;
-      final absoluteSdkRoot = p.normalize(p.join(configDir, rootUriString));
-
-      // Convert the URI to a file system path and append the /lib directory
-      sdkPath = p.join(Uri.parse(absoluteSdkRoot).toFilePath(), 'lib');
-    }
-  }
-
-  if (sdkPath == null) {
-    print(
-      '❌ Error: Package "gyawun_metadata_sdk" not found in package_config.json',
-    );
-    return;
-  }
-
-  // Cleanup path formatting for Linux/macOS/Windows systems
-  sdkPath = p.absolute(sdkPath);
-  print('📂 SDK loaded from: $sdkPath');
 
   // 2. Loading source files
   print('--- Loading source files ---');
