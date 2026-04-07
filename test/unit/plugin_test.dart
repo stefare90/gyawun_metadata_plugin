@@ -34,16 +34,18 @@ class MockNetworkService implements INetworkService {
 }
 
 void main() {
-  group('A group of tests', () {
-    final awesome = MusicbrainzPlugin();
+  group('IAlbum tests', () {
+    HostEnv hostEnv = HostEnv(network: MockNetworkService());
+    final awesome = MusicbrainzPlugin(hostEnv: hostEnv);
     final http.Client client = http.Client();
 
-    setUp(() {
-      MetadataHost.network = MockNetworkService();
-    });
+    setUp(() {});
 
     test('Test get Album', () async {
-      expect(await awesome.album.getAlbum("..."), isA<Map>());
+      final result = await awesome.album.getAlbum("...");
+      expect(result, isA<Album>());
+      expect(result.id, equals("123"));
+      expect(result.name, equals("Test Album"));
     });
   });
 }
