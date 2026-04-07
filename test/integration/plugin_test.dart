@@ -13,9 +13,11 @@ void main() async {
 
     setUpAll(() async {
       final file = File('plugin.evc');
-      if (!file.existsSync()) {
-        throw Exception("File plugin.evc not found!");
-      }
+      expect(
+        file.existsSync(),
+        isTrue,
+        reason: 'Bytecode file should exist at plugin.evc',
+      );
       final bytes = file.readAsBytesSync();
 
       // 2. INITIALIZE RUNTIME
