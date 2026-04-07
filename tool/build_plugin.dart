@@ -49,7 +49,6 @@ void main() async {
 
   // 2. Loading source files
   print('--- Loading source files ---');
-  final sdkSources = _loadSources(sdkPath);
   final pluginSources = _loadSources(p.join(Directory.current.path, 'lib'));
 
   // 3. Bytecode compilation
