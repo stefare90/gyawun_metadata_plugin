@@ -26,38 +26,29 @@ class MusicbrainzPlugin extends IMetadataPlugin {
   MusicbrainzPlugin({required this.hostEnv});
 
   @override
-  // TODO: implement album
   IAlbum get album => MusicbrainzAlbum(mbUrl, hostEnv);
 
   @override
-  // TODO: implement artist
   IArtist get artist => MusicbrainzArtist();
 
   @override
-  // TODO: implement auth
   IAuth get auth => MusicbrainzAuth();
 
   @override
-  // TODO: implement browse
   IBrowse get browse => MusicbrainzBrowse();
 
   @override
-  // TODO: implement core
   ICore get core => MusicbrainzCore();
 
   @override
-  // TODO: implement playlist
   IPlaylist get playlist => MusicbrainzPlaylist();
 
   @override
-  // TODO: implement search
   ISearch get search => MusicbrainzSearch();
 
   @override
-  // TODO: implement track
   ITrack get track => MusicbrainzTrack();
 
   @override
-  // TODO: implement user
   IUser get user => MusicbrainzUser();
 }
