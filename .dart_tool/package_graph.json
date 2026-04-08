@@ -15,7 +15,17 @@
         "eval_annotation",
         "http",
         "lints",
+        "mocktail",
         "test"
+      ]
+    },
+    {
+      "name": "mocktail",
+      "version": "1.0.4",
+      "dependencies": [
+        "collection",
+        "matcher",
+        "test_api"
       ]
     },
     {
@@ -102,6 +112,37 @@
         "dart_eval",
         "eval_annotation"
       ]
+    },
+    {
+      "name": "test_api",
+      "version": "0.7.11",
+      "dependencies": [
+        "async",
+        "boolean_selector",
+        "collection",
+        "meta",
+        "source_span",
+        "stack_trace",
+        "stream_channel",
+        "string_scanner",
+        "term_glyph"
+      ]
+    },
+    {
+      "name": "matcher",
+      "version": "0.12.19",
+      "dependencies": [
+        "async",
+        "meta",
+        "stack_trace",
+        "term_glyph",
+        "test_api"
+      ]
+    },
+    {
+      "name": "collection",
+      "version": "1.19.1",
+      "dependencies": []
     },
     {
       "name": "web",
@@ -215,11 +256,6 @@
       ]
     },
     {
-      "name": "collection",
-      "version": "1.19.1",
-      "dependencies": []
-    },
-    {
       "name": "analyzer",
       "version": "8.4.1",
       "dependencies": [
@@ -292,21 +328,6 @@
         "test_api",
         "vm_service",
         "yaml"
-      ]
-    },
-    {
-      "name": "test_api",
-      "version": "0.7.11",
-      "dependencies": [
-        "async",
-        "boolean_selector",
-        "collection",
-        "meta",
-        "source_span",
-        "stack_trace",
-        "stream_channel",
-        "string_scanner",
-        "term_glyph"
       ]
     },
     {
@@ -387,17 +408,6 @@
       "dependencies": []
     },
     {
-      "name": "matcher",
-      "version": "0.12.19",
-      "dependencies": [
-        "async",
-        "meta",
-        "stack_trace",
-        "term_glyph",
-        "test_api"
-      ]
-    },
-    {
       "name": "io",
       "version": "1.0.5",
       "dependencies": [
@@ -437,6 +447,11 @@
         "source_span",
         "string_scanner"
       ]
+    },
+    {
+      "name": "term_glyph",
+      "version": "1.2.2",
+      "dependencies": []
     },
     {
       "name": "string_scanner",
@@ -546,11 +561,6 @@
         "async",
         "path"
       ]
-    },
-    {
-      "name": "term_glyph",
-      "version": "1.2.2",
-      "dependencies": []
     },
     {
       "name": "mime",
