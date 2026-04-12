@@ -55,29 +55,11 @@ void main() async {
       expect(album.releaseDate, equals("1965-08-06"));
     }
 
-    Future<void> testReleases(IMetadataPlugin plugin) async {
-      dynamic result = await plugin.album.releases();
-
-      expect(result, isA<PaginatedResult<Album>>());
-      expect(result.items.length, equals(1));
-      expect(result.items[0].id, equals('123'));
-      expect(result.items[0].name, equals('Test Album'));
-      expect(result.offset, equals(0));
-      expect(result.limit, equals(20));
-
-      result = await plugin.album.releases(offset: 10, limit: 5);
-
-      expect(result.offset, equals(10));
-      expect(result.limit, equals(5));
-    }
-
     group("Native tests", () {
       test('Test getAlbum', () async => await testGetAlbum(nativePlugin));
-      test('Test releases', () async => await testReleases(nativePlugin));
     });
     group("Eval tests", () {
       test('Test getAlbum', () async => await testGetAlbum(evalPlugin));
-      test('Test releases', () async => await testReleases(evalPlugin));
     });
   });
 }

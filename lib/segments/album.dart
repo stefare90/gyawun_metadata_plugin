@@ -111,30 +111,6 @@ class MusicbrainzAlbum extends IAlbum {
   }
 
   @override
-  Future<PaginatedResult<Album>> releases({
-    int offset = 0,
-    int limit = 20,
-  }) async {
-    await Future.delayed(Duration.zero);
-    return PaginatedResult<Album>(
-      items: [
-        Album(
-          id: "123",
-          name: "Test Album",
-          artists: [],
-          releaseDate: "",
-          externalUri: "$mbUrl/release-group/123",
-          totalTracks: 0,
-          albumType: AlbumType.album,
-        ),
-      ],
-      total: 1,
-      offset: offset,
-      limit: limit,
-    );
-  }
-
-  @override
   Future<void> save(List<String> ids) {
     // TODO: implement save
     throw UnimplementedError();
