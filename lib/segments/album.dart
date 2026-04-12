@@ -145,9 +145,8 @@ class MusicbrainzAlbum extends IAlbum {
     );
   }
 
-  @override
-  Future<Album> getAlbum(String id) async {
-    final releaseData = await _get(mbUrl, "release/$id", {
+  Future<Album> _getAlbum({required String id, Map? releaseData}) async {
+    releaseData ??= await _get(mbUrl, "release/$id", {
       'inc': 'artist-credits',
       'fmt': 'json',
     });
@@ -160,18 +159,23 @@ class MusicbrainzAlbum extends IAlbum {
   }
 
   @override
+  Future<Album> getAlbum(String id) async {
+    return _getAlbum(id: id);
+  }
+
+  @override
   Future<PaginatedResult<Track>> tracks(
     String id, {
     int offset = 0,
     int limit = 20,
   }) async {
-    final album = await getAlbum(id);
-    final tracksData = await _get(mbUrl, "release/$id", {
+    final releaseData = await _get(mbUrl, "release/$id", {
       'inc': 'artist-credits+recordings',
       'fmt': 'json',
     });
+    final album = await _getAlbum(id: id, releaseData: releaseData);
 
-    return _buildTracks(tracksData, album, offset, limit);
+    return _buildTracks(releaseData, album, offset, limit);
   }
 
   @override
