@@ -12,9 +12,10 @@ import 'package:gyawun_metadata_sdk/metadata/models/track.dart';
 
 class MusicbrainzAlbum extends IAlbum {
   final String mbUrl;
+  final String mbUriBase;
   final HostEnv hostEnv;
 
-  MusicbrainzAlbum(this.mbUrl, this.hostEnv);
+  MusicbrainzAlbum(this.mbUrl, this.mbUriBase, this.hostEnv);
 
   Future<Map<String, dynamic>> _get(
     String baseUrl,
@@ -80,7 +81,7 @@ class MusicbrainzAlbum extends IAlbum {
         Artist(
           id: aId,
           name: a['name'] as String,
-          externalUri: "${mbUrl}artist/$aId",
+          externalUri: "${mbUriBase}artist/$aId",
         ),
       );
     }
@@ -90,9 +91,57 @@ class MusicbrainzAlbum extends IAlbum {
       artists: artists,
       images: images,
       releaseDate: releaseData['date'] ?? '',
-      externalUri: "${mbUrl}release-group/${releaseData['id'] as String}",
+      externalUri: "${mbUriBase}release/${releaseData['id'] as String}",
       totalTracks: 0,
       albumType: AlbumType.album,
+    );
+  }
+
+  Future<PaginatedResult<Track>> _buildTracks(
+    Map tracksData,
+    Album album,
+    int offset,
+    int limit,
+  ) async {
+    final List<Track> tracks = [];
+    final List media = tracksData['media'] as List;
+    for (final mObj in media) {
+      final Map m = mObj as Map;
+      final List trackList = m['tracks'] as List;
+      for (final tObj in trackList) {
+        final List<Artist> artists = [];
+        final List credits = tObj['artist-credit'] as List;
+        for (final cObj in credits) {
+          final Map c = cObj as Map;
+          final Map a = c['artist'] as Map;
+          final String aId = a['id'] as String;
+          artists.add(
+            Artist(
+              id: aId,
+              name: a['name'] as String,
+              externalUri: "${mbUriBase}artist/$aId",
+            ),
+          );
+        }
+        final Map t = tObj as Map;
+        tracks.add(
+          Track(
+            id: t['id'] as String,
+            name: t['title'] as String,
+            durationMs: (t['length'] as int?) ?? 0,
+            externalUri:
+                "$mbUriBase/release/${album.id}/disc/${t['position']}#${t['id']}",
+            album: album,
+            artists: artists,
+          ),
+        );
+      }
+    }
+    return PaginatedResult<Track>(
+      items: tracks.skip(offset).take(limit).toList(),
+      total: tracks.length,
+      offset: offset,
+      limit: limit,
     );
   }
 
@@ -111,18 +160,23 @@ class MusicbrainzAlbum extends IAlbum {
   }
 
   @override
-  Future<void> save(List<String> ids) {
-    // TODO: implement save
-    throw UnimplementedError();
-  }
-
-  @override
   Future<PaginatedResult<Track>> tracks(
     String id, {
     int offset = 0,
     int limit = 20,
-  }) {
-    // TODO: implement tracks
+  }) async {
+    final album = await getAlbum(id);
+    final tracksData = await _get(mbUrl, "release/$id", {
+      'inc': 'artist-credits+recordings',
+      'fmt': 'json',
+    });
+
+    return _buildTracks(tracksData, album, offset, limit);
+  }
+
+  @override
+  Future<void> save(List<String> ids) {
+    // TODO: implement save
     throw UnimplementedError();
   }
 

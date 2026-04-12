@@ -21,12 +21,13 @@ import 'package:gyawun_metadata_sdk/metadata/interfaces/iuser.dart';
 
 class MusicbrainzPlugin extends IMetadataPlugin {
   final String mbUrl = 'https://musicbrainz.org/ws/2/';
+  final String mbUriBase = 'https://musicbrainz.org/';
   final HostEnv hostEnv;
 
   MusicbrainzPlugin({required this.hostEnv});
 
   @override
-  IAlbum get album => MusicbrainzAlbum(mbUrl, hostEnv);
+  IAlbum get album => MusicbrainzAlbum(mbUrl, mbUriBase, hostEnv);
 
   @override
   IArtist get artist => MusicbrainzArtist();

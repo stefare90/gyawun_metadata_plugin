@@ -55,11 +55,21 @@ void main() async {
       expect(album.releaseDate, equals("1965-08-06"));
     }
 
+    Future<void> testGetTracks(IMetadataPlugin plugin) async {
+      final tracks = await plugin.album.tracks(
+        '8934167e-7247-4b93-8825-8738407886a6',
+      );
+
+      expect(tracks, isA<PaginatedResult<Track>>());
+    }
+
     group("Native tests", () {
       test('Test getAlbum', () async => await testGetAlbum(nativePlugin));
+      test('Test getTracks', () async => await testGetTracks(nativePlugin));
     });
     group("Eval tests", () {
       test('Test getAlbum', () async => await testGetAlbum(evalPlugin));
+      test('Test getTracks', () async => await testGetTracks(evalPlugin));
     });
   });
 }
