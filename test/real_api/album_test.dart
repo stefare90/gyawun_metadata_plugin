@@ -32,7 +32,7 @@ void main() async {
       expect(
         album.artists.first.externalUri,
         equals(
-          "https://musicbrainz.org/ws/2/artist/b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
+          "https://musicbrainz.org/artist/b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
         ),
       );
       expect(album.images.length, 2);
