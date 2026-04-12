@@ -42,6 +42,60 @@ class MusicbrainzAlbum extends IAlbum {
     return jsonDecode(response.body);
   }
 
+  Album _buildAlbum(Map releaseData, Map coverData) {
+    Map? cover;
+    final List imgs = coverData['images'] as List;
+    for (final imgObj in imgs) {
+      final img = imgObj as Map;
+      if (img['front'] == true && cover == null) {
+        cover = img;
+      }
+    }
+    List<Image> images = [];
+    if (cover != null) {
+      final Map thbMap = cover['thumbnails'] as Map;
+      final List thbValues = thbMap.values.toList();
+      final String imageUrl = cover['image'] as String;
+      final int dotIndex = imageUrl.lastIndexOf('.');
+      if (dotIndex != -1) {
+        final String base = imageUrl.substring(0, dotIndex);
+        final String ext = imageUrl.substring(dotIndex);
+        for (final thbObj in thbValues) {
+          final String thb = thbObj as String;
+          String s = thb.replaceAll(base, "");
+          s = s.replaceAll(ext, "");
+          s = s.replaceAll("-", "");
+          final int? length = int.tryParse(s);
+          images.add(Image(url: thb, width: length, height: length));
+        }
+      }
+    }
+    final List<Artist> artists = [];
+    final List credits = releaseData['artist-credit'] as List;
+    for (final cObj in credits) {
+      final Map c = cObj as Map;
+      final Map a = c['artist'] as Map;
+      final String aId = a['id'] as String;
+      artists.add(
+        Artist(
+          id: aId,
+          name: a['name'] as String,
+          externalUri: "${mbUrl}artist/$aId",
+        ),
+      );
+    }
+    return Album(
+      id: releaseData['id'] as String,
+      name: releaseData['title'] as String,
+      artists: artists,
+      images: images,
+      releaseDate: releaseData['date'] ?? '',
+      externalUri: "${mbUrl}release-group/${releaseData['id'] as String}",
+      totalTracks: 0,
+      albumType: AlbumType.album,
+    );
+  }
+
   @override
   Future<Album> getAlbum(String id) async {
     final releaseData = await _get(mbUrl, "release/$id", {
@@ -53,28 +107,7 @@ class MusicbrainzAlbum extends IAlbum {
       "release/$id",
       {},
     );
-    final List imagesList = coverData['images'] ?? [];
-    late List<Image> images = imagesList
-        .map((img) => Image(url: img['image'] as String))
-        .toList();
-    return Album(
-      id: releaseData['id'],
-      name: releaseData['title'],
-      artists: (releaseData['artist-credit'] as List)
-          .map(
-            (a) => Artist(
-              id: a['artist']['id'],
-              name: a['artist']['name'],
-              externalUri: "${mbUrl}artist/${a['artist']['id']}",
-            ),
-          )
-          .toList(),
-      images: images,
-      releaseDate: releaseData['first-release-date'] ?? '',
-      externalUri: "${mbUrl}release-group/${releaseData['id']}",
-      totalTracks: 0,
-      albumType: AlbumType.album,
-    );
+    return _buildAlbum(releaseData, coverData);
   }
 
   @override

@@ -35,6 +35,24 @@ void main() async {
           "https://musicbrainz.org/ws/2/artist/b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d",
         ),
       );
+      expect(album.images.length, 2);
+      expect(
+        album.images[0].url,
+        equals(
+          "http://coverartarchive.org/release/2c053984-4645-4699-9474-d2c35c227028/6119756270-250.jpg",
+        ),
+      );
+      expect(album.images[0].width, equals(250));
+      expect(album.images[0].height, equals(250));
+      expect(
+        album.images[1].url,
+        equals(
+          "http://coverartarchive.org/release/2c053984-4645-4699-9474-d2c35c227028/6119756270-500.jpg",
+        ),
+      );
+      expect(album.images[1].width, equals(500));
+      expect(album.images[1].height, equals(500));
+      expect(album.releaseDate, equals("1965-08-06"));
     }
 
     Future<void> testReleases(IMetadataPlugin plugin) async {
