@@ -97,56 +97,51 @@ class MusicbrainzAlbum extends IAlbum {
     );
   }
 
-  Future<PaginatedResult<Track>> _buildTracks(
+  PaginatedResult<Track> _buildTracks(
     Map tracksData,
     Album album,
     int offset,
     int limit,
-  ) async {
+  ) {
     final List<Track> tracks = [];
-    final List media = tracksData['media'] as List;
-    for (final mObj in media) {
-      final Map m = mObj as Map;
-      final List trackList = m['tracks'] as List;
-      for (final tObj in trackList) {
-        final List<Artist> artists = [];
-        final List credits = tObj['artist-credit'] as List;
-        for (final cObj in credits) {
-          final Map c = cObj as Map;
-          final Map a = c['artist'] as Map;
-          final String aId = a['id'] as String;
-          artists.add(
-            Artist(
-              id: aId,
-              name: a['name'] as String,
-              externalUri: "${mbUriBase}artist/$aId",
-            ),
-          );
-        }
-        final Map t = tObj as Map;
-        tracks.add(
-          Track(
-            id: t['id'] as String,
-            name: t['title'] as String,
-            durationMs: (t['length'] as int?) ?? 0,
-            externalUri:
-                "$mbUriBase/release/${album.id}/disc/${t['position']}#${t['id']}",
-            album: album,
-            artists: artists,
+    for (final tObj in tracksData['recordings']) {
+      final List<Artist> artists = [];
+      final List credits = tObj['artist-credit'] as List;
+      for (final cObj in credits) {
+        final Map c = cObj as Map;
+        final Map a = c['artist'] as Map;
+        final String aId = a['id'] as String;
+        artists.add(
+          Artist(
+            id: aId,
+            name: a['name'] as String,
+            externalUri: "${mbUriBase}artist/$aId",
           ),
         );
       }
+      final Map t = tObj as Map;
+      tracks.add(
+        Track(
+          id: t['id'] as String,
+          name: t['title'] as String,
+          durationMs: (t['length'] as int?) ?? 0,
+          externalUri: "$mbUriBase/recording/${t['id']}",
+          album: album,
+          artists: artists,
+        ),
+      );
     }
     return PaginatedResult<Track>(
-      items: tracks.skip(offset).take(limit).toList(),
+      items: tracks,
       total: tracks.length,
       offset: offset,
       limit: limit,
     );
   }
 
-  Future<Album> _getAlbum({required String id, Map? releaseData}) async {
-    releaseData ??= await _get(mbUrl, "release/$id", {
+  @override
+  Future<Album> getAlbum(String id) async {
+    final releaseData = await _get(mbUrl, "release/$id", {
       'inc': 'artist-credits',
       'fmt': 'json',
     });
@@ -159,23 +154,20 @@ class MusicbrainzAlbum extends IAlbum {
   }
 
   @override
-  Future<Album> getAlbum(String id) async {
-    return _getAlbum(id: id);
-  }
-
-  @override
   Future<PaginatedResult<Track>> tracks(
     String id, {
     int offset = 0,
     int limit = 20,
   }) async {
-    final releaseData = await _get(mbUrl, "release/$id", {
-      'inc': 'artist-credits+recordings',
+    final album = await getAlbum(id);
+    final tracksData = await _get(mbUrl, "recording", {
+      'release': id,
+      'limit': limit.toString(),
+      'offset': offset.toString(),
+      'inc': 'artist-credits',
       'fmt': 'json',
     });
-    final album = await _getAlbum(id: id, releaseData: releaseData);
-
-    return _buildTracks(releaseData, album, offset, limit);
+    return _buildTracks(tracksData, album, offset, limit);
   }
 
   @override

@@ -56,11 +56,73 @@ void main() async {
     }
 
     Future<void> testGetTracks(IMetadataPlugin plugin) async {
-      final tracks = await plugin.album.tracks(
-        '8934167e-7247-4b93-8825-8738407886a6',
+      var tracks = await plugin.album.tracks(
+        '2c053984-4645-4699-9474-d2c35c227028',
+        offset: 0,
+        limit: 2,
       );
 
       expect(tracks, isA<PaginatedResult<Track>>());
+      expect(tracks.offset, 0);
+      expect(tracks.limit, 2);
+      expect(tracks.total, 2);
+      expect(tracks.items.length, 2);
+      expect(tracks.items, isA<List<Track>>());
+      expect(tracks.items[0].album.name, equals("Help!"));
+      expect(tracks.items[0].artists[0].name, equals("The Beatles"));
+      expect(tracks.items[0].name, equals("Another Girl"));
+      expect(tracks.items[0].durationMs, 128000);
+      expect(
+        tracks.items[0].id,
+        equals("42bc157f-2696-4337-8634-36e676c4ab8e"),
+      );
+      expect(
+        tracks.items[0].externalUri,
+        equals(
+          "https://musicbrainz.org//recording/42bc157f-2696-4337-8634-36e676c4ab8e",
+        ),
+      );
+      expect(tracks.items[1].album.name, equals("Help!"));
+      expect(tracks.items[1].artists[0].name, equals("The Beatles"));
+      expect(tracks.items[1].name, equals("Act Naturally"));
+      expect(tracks.items[1].durationMs, 153000);
+      expect(
+        tracks.items[1].id,
+        equals("f59e9c88-986a-4b63-b10e-ee88139d4f81"),
+      );
+      expect(
+        tracks.items[1].externalUri,
+        equals(
+          "https://musicbrainz.org//recording/f59e9c88-986a-4b63-b10e-ee88139d4f81",
+        ),
+      );
+
+      tracks = await plugin.album.tracks(
+        '2c053984-4645-4699-9474-d2c35c227028',
+        offset: 2,
+        limit: 1,
+      );
+
+      expect(tracks, isA<PaginatedResult<Track>>());
+      expect(tracks.offset, 2);
+      expect(tracks.limit, 1);
+      expect(tracks.total, 1);
+      expect(tracks.items.length, 1);
+      expect(tracks.items, isA<List<Track>>());
+      expect(tracks.items[0].album.name, equals("Help!"));
+      expect(tracks.items[0].artists[0].name, equals("The Beatles"));
+      expect(tracks.items[0].name, equals("Dizzy Miss Lizzy"));
+      expect(tracks.items[0].durationMs, 174266);
+      expect(
+        tracks.items[0].id,
+        equals("e75e4b16-63ed-4739-a084-7c92d219c099"),
+      );
+      expect(
+        tracks.items[0].externalUri,
+        equals(
+          "https://musicbrainz.org//recording/e75e4b16-63ed-4739-a084-7c92d219c099",
+        ),
+      );
     }
 
     group("Native tests", () {
