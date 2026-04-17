@@ -27,13 +27,13 @@ class MusicbrainzPlugin extends IMetadataPlugin {
   MusicbrainzPlugin({required this.hostEnv});
 
   @override
+  IAuth get auth => MusicbrainzAuth(mbUrl, mbUriBase, hostEnv);
+
+  @override
   IAlbum get album => MusicbrainzAlbum(mbUrl, mbUriBase, hostEnv);
 
   @override
   IArtist get artist => MusicbrainzArtist();
-
-  @override
-  IAuth get auth => MusicbrainzAuth();
 
   @override
   IBrowse get browse => MusicbrainzBrowse();

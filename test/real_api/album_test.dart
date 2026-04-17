@@ -1,16 +1,27 @@
+import 'package:gyawun_metadata_sdk/metadata/interfaces/iui_service.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 import 'package:gyawun_metadata_sdk/metadata_plugin_sdk.dart';
 import '../common/setup.dart';
 import '_support/network_service.dart';
+import '_support/storage_service.dart';
+import '_support/ui_service.dart';
 
 void main() async {
   group("Album interface test", () {
     late HostEnv hostEnv;
     late IMetadataPlugin nativePlugin;
     late IMetadataPlugin evalPlugin;
+    late IUIService mockUi;
 
     setUpAll(() async {
-      hostEnv = HostEnv(network: NetworkService());
+      mockUi = MockUiService();
+      registerFallbackValue(FakeInputField());
+      hostEnv = HostEnv(
+        network: NetworkService(),
+        storage: StorageService(),
+        ui: mockUi,
+      );
       nativePlugin = getNativePlugin(hostEnv);
       evalPlugin = getEvalPlugin(hostEnv);
     });
