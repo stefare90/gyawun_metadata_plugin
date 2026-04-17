@@ -195,7 +195,7 @@
     },
     {
       "name": "mocktail",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/mocktail-1.0.4",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/mocktail-1.0.5",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -333,7 +333,7 @@
     },
     {
       "name": "vm_service",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/vm_service-15.0.2",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/vm_service-15.1.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
@@ -381,8 +381,8 @@
     }
   ],
   "generator": "pub",
-  "generatorVersion": "3.10.7",
+  "generatorVersion": "3.11.4",
   "flutterRoot": "file:///opt/flutter",
-  "flutterVersion": "3.38.7",
+  "flutterVersion": "3.41.6",
   "pubCache": "file:///home/stefare/.pub-cache"
 }

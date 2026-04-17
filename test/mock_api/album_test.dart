@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:gyawun_metadata_sdk/metadata/interfaces/inetwork_service.dart';
+import 'package:gyawun_metadata_sdk/metadata/interfaces/istorage_service.dart';
+import 'package:gyawun_metadata_sdk/metadata/interfaces/iui_service.dart';
 import 'package:gyawun_metadata_sdk/metadata_plugin_sdk.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
@@ -15,11 +17,15 @@ void main() {
     late IMetadataPlugin nativePlugin;
     late IMetadataPlugin evalPlugin;
     late INetworkService mockNetwork;
+    late IUIService mockUi;
+    late IStorageService mockStorage;
 
     setUpAll(() {
       registerFallbackValues();
       mockNetwork = MockNetworkService();
-      hostEnv = HostEnv(network: mockNetwork);
+      mockStorage = MockStorage();
+      mockUi = MockUiService();
+      hostEnv = HostEnv(network: mockNetwork, storage: mockStorage, ui: mockUi);
       nativePlugin = getNativePlugin(hostEnv);
       evalPlugin = getEvalPlugin(hostEnv);
     });
