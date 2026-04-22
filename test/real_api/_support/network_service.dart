@@ -8,7 +8,8 @@ class NetworkService implements INetworkService {
 
   @override
   Future<PluginResponse> send(PluginRequest request) async {
-    final finalHeaders = {'User-Agent': 'Gyawun/1.0.0'};
+    final finalHeaders = {'User-Agent': 'Gyawun/1.0.0'}
+      ..addAll(request.headers);
 
     final uri = Uri.parse(request.url);
     http.Response requestFuture;

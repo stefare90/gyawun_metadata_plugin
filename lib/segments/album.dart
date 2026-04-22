@@ -1,47 +1,20 @@
-import 'dart:convert';
-
-import 'package:gyawun_metadata_sdk/metadata/host_env.dart';
+import 'package:gyawun_metadata_plugin/segments/host_tools.dart';
+import 'package:gyawun_metadata_plugin/segments/user.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/ialbum.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/album.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/artist.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/image.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/pagination.dart';
-import 'package:gyawun_metadata_sdk/metadata/models/plugin_request.dart';
-import 'package:gyawun_metadata_sdk/metadata/models/plugin_response.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/track.dart';
 
 class MusicbrainzAlbum extends IAlbum {
   final String mbUrl;
   final String mbUriBase;
-  final HostEnv hostEnv;
+  final playlistName = "__GYAWUN_ALBUMS__";
+  final HostTools _host;
+  final MusicbrainzUser user;
 
-  MusicbrainzAlbum(this.mbUrl, this.mbUriBase, this.hostEnv);
-
-  Future<Map<String, dynamic>> _get(
-    String baseUrl,
-    String path,
-    Map<String, String> query,
-  ) async {
-    final queryString = query.entries
-        .map((e) => '${e.key}=${Uri.encodeComponent(e.value)}')
-        .join('&');
-    String url = "$baseUrl$path";
-    if (queryString.isNotEmpty) {
-      url += "?$queryString";
-    }
-    final request = PluginRequest(
-      url: url,
-      method: 'GET',
-      headers: {'Accept': 'application/json'},
-    );
-    print("Sending API request to $url with headers: ${request.headers}");
-    final PluginResponse response = await hostEnv.network.send(request);
-    print("API Response for $url: ${response.statusCode} ${response.body}");
-    if (response.statusCode != 200) {
-      throw Exception("Errore API: ${response.statusCode}");
-    }
-    return jsonDecode(response.body);
-  }
+  MusicbrainzAlbum(this.mbUrl, this.mbUriBase, this._host, this.user);
 
   Album _buildAlbum(Map releaseData, Map coverData) {
     Map? cover;
@@ -141,14 +114,15 @@ class MusicbrainzAlbum extends IAlbum {
 
   @override
   Future<Album> getAlbum(String id) async {
-    final releaseData = await _get(mbUrl, "release/$id", {
-      'inc': 'artist-credits',
-      'fmt': 'json',
-    });
-    final coverData = await _get(
-      "https://coverartarchive.org/",
-      "release/$id",
-      {},
+    final releaseData = await _host.fetchApi(
+      baseUrl: mbUrl,
+      path: "release/$id",
+      headers: {},
+      query: {'inc': 'artist-credits', 'fmt': 'json'},
+    );
+    final coverData = await _host.fetchApi(
+      baseUrl: "https://coverartarchive.org/",
+      path: "release/$id",
     );
     return _buildAlbum(releaseData, coverData);
   }
@@ -160,20 +134,25 @@ class MusicbrainzAlbum extends IAlbum {
     int limit = 20,
   }) async {
     final album = await getAlbum(id);
-    final tracksData = await _get(mbUrl, "recording", {
-      'release': id,
-      'limit': limit.toString(),
-      'offset': offset.toString(),
-      'inc': 'artist-credits',
-      'fmt': 'json',
-    });
+    final tracksData = await _host.fetchApi(
+      baseUrl: mbUrl,
+      path: "recording",
+      query: {
+        'release': id,
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+        'inc': 'artist-credits',
+        'fmt': 'json',
+      },
+    );
     return _buildTracks(tracksData, album, offset, limit);
   }
 
   @override
-  Future<void> save(List<String> ids) {
-    // TODO: implement save
-    throw UnimplementedError();
+  Future<void> save(List<String> ids) async {
+    for (String id in ids) {
+      user.saveAlbum(id: id);
+    }
   }
 
   @override

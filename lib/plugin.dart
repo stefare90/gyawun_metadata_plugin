@@ -2,6 +2,7 @@ import 'package:gyawun_metadata_plugin/segments/artist.dart';
 import 'package:gyawun_metadata_plugin/segments/auth.dart';
 import 'package:gyawun_metadata_plugin/segments/browse.dart';
 import 'package:gyawun_metadata_plugin/segments/core.dart';
+import 'package:gyawun_metadata_plugin/segments/host_tools.dart';
 import 'package:gyawun_metadata_plugin/segments/playlist.dart';
 import 'package:gyawun_metadata_plugin/segments/search.dart';
 import 'package:gyawun_metadata_plugin/segments/track.dart';
@@ -20,36 +21,60 @@ import 'package:gyawun_metadata_sdk/metadata/interfaces/itrack.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/iuser.dart';
 
 class MusicbrainzPlugin extends IMetadataPlugin {
-  final String mbUrl = 'https://musicbrainz.org/ws/2/';
-  final String mbUriBase = 'https://musicbrainz.org/';
-  final HostEnv hostEnv;
+  late String _mbUrl;
+  late String _mbUriBase;
+  late String _lbUrl;
+  late HostEnv hostEnv;
+  late MusicbrainzAuth _auth;
+  late MusicbrainzUser _user;
+  late MusicbrainzAlbum _album;
+  late MusicbrainzArtist _artist;
+  late MusicbrainzBrowse _browse;
+  late MusicbrainzCore _core;
+  late MusicbrainzPlaylist _playlist;
+  late MusicbrainzSearch _search;
+  late MusicbrainzTrack _track;
 
-  MusicbrainzPlugin({required this.hostEnv});
+  MusicbrainzPlugin({required this.hostEnv}) {
+    _lbUrl = "https://api.listenbrainz.org/1/";
+    _mbUrl = 'https://musicbrainz.org/ws/2/';
+    _mbUriBase = 'https://musicbrainz.org/';
+    final host = HostTools(hostEnv);
+    _auth = MusicbrainzAuth(_mbUrl, _mbUriBase, host);
+    _user = MusicbrainzUser(_auth, _lbUrl, _mbUriBase, host);
+    _album = MusicbrainzAlbum(_mbUrl, _mbUriBase, host, _user);
+    _artist = MusicbrainzArtist();
+    _browse = MusicbrainzBrowse();
+    _core = MusicbrainzCore();
+    _playlist = MusicbrainzPlaylist();
+    _search = MusicbrainzSearch();
+    _track = MusicbrainzTrack();
+  }
 
   @override
-  IAuth get auth => MusicbrainzAuth(mbUrl, mbUriBase, hostEnv);
+  IAuth get auth => _auth;
 
   @override
-  IAlbum get album => MusicbrainzAlbum(mbUrl, mbUriBase, hostEnv);
+  IUser get user => _user;
 
   @override
-  IArtist get artist => MusicbrainzArtist();
+  IAlbum get album => _album;
 
   @override
-  IBrowse get browse => MusicbrainzBrowse();
+  IArtist get artist => _artist;
 
   @override
-  ICore get core => MusicbrainzCore();
+  IBrowse get browse => _browse;
 
   @override
-  IPlaylist get playlist => MusicbrainzPlaylist();
+  ICore get core => _core;
 
   @override
-  ISearch get search => MusicbrainzSearch();
+  IPlaylist get playlist => _playlist;
 
   @override
-  ITrack get track => MusicbrainzTrack();
+  ISearch get search => _search;
 
   @override
-  IUser get user => MusicbrainzUser();
+  ITrack get track => _track;
 }

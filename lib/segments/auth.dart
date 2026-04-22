@@ -1,32 +1,32 @@
-import 'package:gyawun_metadata_sdk/metadata/host_env.dart';
+import 'package:gyawun_metadata_plugin/segments/host_tools.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/iauth.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/form_input_field.dart';
 
 class MusicbrainzAuth extends IAuth {
-  final String mbUrl;
-  final String mbUriBase;
-  final HostEnv hostEnv;
+  final String _mbUrl;
+  final String _mbUriBase;
+  final HostTools _host;
   String token = "";
 
-  MusicbrainzAuth(this.mbUrl, this.mbUriBase, this.hostEnv);
+  MusicbrainzAuth(this._mbUrl, this._mbUriBase, this._host);
 
   @override
   Future<void> authenticate() async {
-    final Map result = await hostEnv.ui.showForm(
+    final Map result = await _host.env.ui.showForm(
       title: "MusicBrainz authentication",
       fields: [FormInputField(id: "token", label: "token")],
     );
     final newToken = result["token"] as String?;
     if (newToken != null) {
       token = newToken;
-      await hostEnv.storage.set("token", newToken);
+      await _host.env.storage.set("token", newToken);
     }
   }
 
   @override
   Future<bool> isAuthenticated() async {
     if (token == "") {
-      final String? savedToken = await hostEnv.storage.get("token");
+      final String? savedToken = await _host.env.storage.get("token");
       if (savedToken != null) {
         token = savedToken;
       }
@@ -37,6 +37,6 @@ class MusicbrainzAuth extends IAuth {
   @override
   Future<void> logout() async {
     token = "";
-    await hostEnv.storage.delete("token");
+    await _host.env.storage.delete("token");
   }
 }
