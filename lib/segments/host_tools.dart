@@ -9,7 +9,7 @@ class HostTools {
 
   HostTools(this.env);
 
-  Future<Map<String, dynamic>> fetchApi({
+  Future fetchApi({
     required String baseUrl,
     required String path,
     Map<String, String> headers = const {},
@@ -31,7 +31,7 @@ class HostTools {
     final PluginResponse response = await env.network.send(request);
     print("API Response for $url: ${response.statusCode} ${response.body}");
     if (response.statusCode != 200) {
-      throw Exception("Errore API: ${response.statusCode}");
+      throw Exception("API Error: ${response.statusCode} ${response.body}");
     }
     return jsonDecode(response.body);
   }

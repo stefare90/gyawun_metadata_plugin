@@ -63,7 +63,7 @@
     },
     {
       "name": "coverage",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/coverage-1.15.0",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/coverage-1.15.1",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -75,7 +75,7 @@
     },
     {
       "name": "dart_eval",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/dart_eval-0.8.4",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/dart_eval-0.8.5",
       "packageUri": "lib/",
       "languageVersion": "3.8"
     },
@@ -153,7 +153,7 @@
     },
     {
       "name": "json_annotation",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/json_annotation-4.11.0",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/json_annotation-4.12.0",
       "packageUri": "lib/",
       "languageVersion": "3.9"
     },
@@ -177,13 +177,13 @@
     },
     {
       "name": "matcher",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/matcher-0.12.19",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/matcher-0.12.20",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.10"
     },
     {
       "name": "meta",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/meta-1.18.2",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/meta-1.19.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
@@ -309,21 +309,21 @@
     },
     {
       "name": "test",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/test-1.31.0",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/test-1.31.1",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.10"
     },
     {
       "name": "test_api",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/test_api-0.7.11",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/test_api-0.7.12",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.10"
     },
     {
       "name": "test_core",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/test_core-0.6.17",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/test_core-0.6.18",
       "packageUri": "lib/",
-      "languageVersion": "3.7"
+      "languageVersion": "3.10"
     },
     {
       "name": "typed_data",
@@ -333,7 +333,7 @@
     },
     {
       "name": "vm_service",
-      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/vm_service-15.1.0",
+      "rootUri": "file:///home/stefare/.pub-cache/hosted/pub.dev/vm_service-15.2.0",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     },
@@ -381,8 +381,8 @@
     }
   ],
   "generator": "pub",
-  "generatorVersion": "3.11.4",
+  "generatorVersion": "3.12.2",
   "flutterRoot": "file:///opt/flutter",
-  "flutterVersion": "3.41.6",
+  "flutterVersion": "3.44.6",
   "pubCache": "file:///home/stefare/.pub-cache"
 }

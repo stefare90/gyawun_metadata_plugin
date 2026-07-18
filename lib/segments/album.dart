@@ -156,8 +156,9 @@ class MusicbrainzAlbum extends IAlbum {
   }
 
   @override
-  Future<void> unsave(List<String> ids) {
-    // TODO: implement unsave
-    throw UnimplementedError();
+  Future<void> unsave(List<String> ids) async {
+    for (String id in ids) {
+      user.unsaveAlbum(id: id);
+    }
   }
 }

@@ -24,6 +24,7 @@ class MusicbrainzPlugin extends IMetadataPlugin {
   late String _mbUrl;
   late String _mbUriBase;
   late String _lbUrl;
+  late String _lbLabsUrl;
   late HostEnv hostEnv;
   late MusicbrainzAuth _auth;
   late MusicbrainzUser _user;
@@ -37,13 +38,21 @@ class MusicbrainzPlugin extends IMetadataPlugin {
 
   MusicbrainzPlugin({required this.hostEnv}) {
     _lbUrl = "https://api.listenbrainz.org/1/";
+    _lbLabsUrl = "https://labs.api.listenbrainz.org";
     _mbUrl = 'https://musicbrainz.org/ws/2/';
     _mbUriBase = 'https://musicbrainz.org/';
     final host = HostTools(hostEnv);
     _auth = MusicbrainzAuth(_mbUrl, _mbUriBase, host);
     _user = MusicbrainzUser(_auth, _lbUrl, _mbUriBase, host);
     _album = MusicbrainzAlbum(_mbUrl, _mbUriBase, host, _user);
-    _artist = MusicbrainzArtist();
+    _artist = MusicbrainzArtist(
+      _mbUrl,
+      _mbUriBase,
+      _lbUrl,
+      _lbLabsUrl,
+      host,
+      _user,
+    );
     _browse = MusicbrainzBrowse();
     _core = MusicbrainzCore();
     _playlist = MusicbrainzPlaylist();

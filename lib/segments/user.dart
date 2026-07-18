@@ -64,4 +64,16 @@ class MusicbrainzUser extends IUser {
   Future<void> saveAlbum({required String id}) async {
     throw UnimplementedError();
   }
+
+  Future<void> unsaveAlbum({required String id}) async {
+    throw UnimplementedError();
+  }
+
+  Future<void> saveArtist({required String id}) async {
+    throw UnimplementedError();
+  }
+
+  Future<void> unsaveArtist({required String id}) async {
+    throw UnimplementedError();
+  }
 }
