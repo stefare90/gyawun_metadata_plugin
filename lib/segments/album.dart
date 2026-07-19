@@ -15,47 +15,55 @@ class MusicbrainzAlbum extends IAlbum {
 
   MusicbrainzAlbum(this._host, this.user);
 
-  Album _buildAlbum(Map releaseData, Map coverData) {
-    Map? cover;
-    final List imgs = coverData['images'] as List;
-    for (final imgObj in imgs) {
-      final img = imgObj as Map;
-      if (img['front'] == true && cover == null) {
-        cover = img;
-      }
-    }
-    List<Image> images = [];
-    if (cover != null) {
-      final Map thbMap = cover['thumbnails'] as Map;
-      final List thbValues = thbMap.values.toList();
-      final String imageUrl = cover['image'] as String;
-      final int dotIndex = imageUrl.lastIndexOf('.');
-      if (dotIndex != -1) {
-        final String base = imageUrl.substring(0, dotIndex);
-        final String ext = imageUrl.substring(dotIndex);
-        for (final thbObj in thbValues) {
-          final String thb = thbObj as String;
-          String s = thb.replaceAll(base, "");
-          s = s.replaceAll(ext, "");
-          s = s.replaceAll("-", "");
-          final int? length = int.tryParse(s);
-          images.add(Image(url: thb, width: length, height: length));
-        }
+  static Album buildAlbum(Map releaseData) {
+    final List<Image> images = [];
+    final Map? coverArt = releaseData['cover-art-archive'] as Map?;
+    if (coverArt != null) {
+      final bool? hasFront = coverArt['front'] as bool?;
+      if (hasFront == true) {
+        final String releaseId = releaseData['id'] as String;
+        images.add(
+          Image(
+            url: "https://coverartarchive.org/release/$releaseId/front-250.jpg",
+            width: 250,
+            height: 250,
+          ),
+        );
+        images.add(
+          Image(
+            url: "https://coverartarchive.org/release/$releaseId/front-500.jpg",
+            width: 500,
+            height: 500,
+          ),
+        );
       }
     }
     final List<Artist> artists = [];
-    final List credits = releaseData['artist-credit'] as List;
-    for (final cObj in credits) {
-      final Map c = cObj as Map;
-      final Map a = c['artist'] as Map;
-      final String aId = a['id'] as String;
-      artists.add(
-        Artist(
-          id: aId,
-          name: a['name'] as String,
-          externalUri: "${MusicbrainzPlugin.mbUriBase}artist/$aId",
-        ),
-      );
+    final List? credits = releaseData['artist-credit'] as List?;
+    if (credits != null) {
+      for (final cObj in credits) {
+        final Map c = cObj as Map;
+        final Map a = c['artist'] as Map;
+        final String aId = a['id'] as String;
+        artists.add(
+          Artist(
+            id: aId,
+            name: a['name'] as String,
+            externalUri: "${MusicbrainzPlugin.mbUriBase}artist/$aId",
+          ),
+        );
+      }
+    }
+    int trackCount = 0;
+    final List? mediaList = releaseData['media'] as List?;
+    if (mediaList != null) {
+      for (final mObj in mediaList) {
+        final Map m = mObj as Map;
+        final int? mCount = m['track-count'] as int?;
+        if (mCount != null) {
+          trackCount += mCount;
+        }
+      }
     }
     return Album(
       id: releaseData['id'] as String,
@@ -65,7 +73,7 @@ class MusicbrainzAlbum extends IAlbum {
       releaseDate: releaseData['date'] ?? '',
       externalUri:
           "${MusicbrainzPlugin.mbUriBase}release/${releaseData['id'] as String}",
-      totalTracks: 0,
+      totalTracks: trackCount,
       albumType: AlbumType.album,
     );
   }
@@ -118,13 +126,9 @@ class MusicbrainzAlbum extends IAlbum {
       baseUrl: MusicbrainzPlugin.mbUrl,
       path: "release/$id",
       headers: {},
-      query: {'inc': 'artist-credits', 'fmt': 'json'},
+      query: {'inc': 'artist-credits+recordings', 'fmt': 'json'},
     );
-    final coverData = await _host.fetchApi(
-      baseUrl: "https://coverartarchive.org/",
-      path: "release/$id",
-    );
-    return _buildAlbum(releaseData, coverData);
+    return buildAlbum(releaseData);
   }
 
   @override

@@ -50,7 +50,7 @@ void main() async {
       expect(
         album.images[0].url,
         equals(
-          "http://coverartarchive.org/release/2c053984-4645-4699-9474-d2c35c227028/6119756270-250.jpg",
+          "https://coverartarchive.org/release/2c053984-4645-4699-9474-d2c35c227028/front-250.jpg",
         ),
       );
       expect(album.images[0].width, equals(250));
@@ -58,12 +58,13 @@ void main() async {
       expect(
         album.images[1].url,
         equals(
-          "http://coverartarchive.org/release/2c053984-4645-4699-9474-d2c35c227028/6119756270-500.jpg",
+          "https://coverartarchive.org/release/2c053984-4645-4699-9474-d2c35c227028/front-500.jpg",
         ),
       );
       expect(album.images[1].width, equals(500));
       expect(album.images[1].height, equals(500));
       expect(album.releaseDate, equals("1965-08-06"));
+      expect(album.totalTracks, equals(14));
     }
 
     Future<void> testGetTracks(IMetadataPlugin plugin) async {
