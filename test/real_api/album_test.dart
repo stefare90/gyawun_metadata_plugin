@@ -90,7 +90,7 @@ void main() async {
       expect(
         tracks.items[0].externalUri,
         equals(
-          "https://musicbrainz.org//recording/42bc157f-2696-4337-8634-36e676c4ab8e",
+          "https://musicbrainz.org/recording/42bc157f-2696-4337-8634-36e676c4ab8e",
         ),
       );
       expect(tracks.items[1].album.name, equals("Help!"));
@@ -104,7 +104,7 @@ void main() async {
       expect(
         tracks.items[1].externalUri,
         equals(
-          "https://musicbrainz.org//recording/f59e9c88-986a-4b63-b10e-ee88139d4f81",
+          "https://musicbrainz.org/recording/f59e9c88-986a-4b63-b10e-ee88139d4f81",
         ),
       );
 
@@ -131,7 +131,7 @@ void main() async {
       expect(
         tracks.items[0].externalUri,
         equals(
-          "https://musicbrainz.org//recording/e75e4b16-63ed-4739-a084-7c92d219c099",
+          "https://musicbrainz.org/recording/e75e4b16-63ed-4739-a084-7c92d219c099",
         ),
       );
     }

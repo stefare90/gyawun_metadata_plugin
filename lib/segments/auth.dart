@@ -3,12 +3,10 @@ import 'package:gyawun_metadata_sdk/metadata/interfaces/iauth.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/form_input_field.dart';
 
 class MusicbrainzAuth extends IAuth {
-  final String _mbUrl;
-  final String _mbUriBase;
   final HostTools _host;
   String token = "";
 
-  MusicbrainzAuth(this._mbUrl, this._mbUriBase, this._host);
+  MusicbrainzAuth(this._host);
 
   @override
   Future<void> authenticate() async {

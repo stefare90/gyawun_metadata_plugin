@@ -1,3 +1,4 @@
+import 'package:gyawun_metadata_plugin/plugin.dart';
 import 'package:gyawun_metadata_plugin/segments/auth.dart';
 import 'package:gyawun_metadata_plugin/segments/host_tools.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/iuser.dart';
@@ -11,18 +12,16 @@ class MusicbrainzUser extends IUser {
   final MusicbrainzAuth _auth;
   final String albumPlaylistName = "__GYAWUN_ALBUMS__";
   final String artistPlaylistName = "__GYAWUN_ARTISTS__";
-  final String _lbUrl;
-  final String _mbUriBase;
   final HostTools _host;
   String userId = "";
 
-  MusicbrainzUser(this._auth, this._lbUrl, this._mbUriBase, this._host);
+  MusicbrainzUser(this._auth, this._host);
 
   @override
   Future<Map<String, dynamic>> me() async {
     if (userId == "") {
       final data = await _host.fetchApi(
-        baseUrl: _lbUrl,
+        baseUrl: MusicbrainzPlugin.lbUrl,
         path: "validate-token",
         headers: {'Authorization': 'Token ${_auth.token}'},
       );

@@ -21,10 +21,11 @@ import 'package:gyawun_metadata_sdk/metadata/interfaces/itrack.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/iuser.dart';
 
 class MusicbrainzPlugin extends IMetadataPlugin {
-  late String _mbUrl;
-  late String _mbUriBase;
-  late String _lbUrl;
-  late String _lbLabsUrl;
+  static const String mbUrl = 'https://musicbrainz.org/ws/2/';
+  static const String mbUriBase = 'https://musicbrainz.org/';
+  static const String lbUrl = 'https://api.listenbrainz.org/1/';
+  static const String lbLabsUrl = 'https://labs.api.listenbrainz.org';
+
   late HostEnv hostEnv;
   late MusicbrainzAuth _auth;
   late MusicbrainzUser _user;
@@ -37,22 +38,11 @@ class MusicbrainzPlugin extends IMetadataPlugin {
   late MusicbrainzTrack _track;
 
   MusicbrainzPlugin({required this.hostEnv}) {
-    _lbUrl = "https://api.listenbrainz.org/1/";
-    _lbLabsUrl = "https://labs.api.listenbrainz.org";
-    _mbUrl = 'https://musicbrainz.org/ws/2/';
-    _mbUriBase = 'https://musicbrainz.org/';
     final host = HostTools(hostEnv);
-    _auth = MusicbrainzAuth(_mbUrl, _mbUriBase, host);
-    _user = MusicbrainzUser(_auth, _lbUrl, _mbUriBase, host);
-    _album = MusicbrainzAlbum(_mbUrl, _mbUriBase, host, _user);
-    _artist = MusicbrainzArtist(
-      _mbUrl,
-      _mbUriBase,
-      _lbUrl,
-      _lbLabsUrl,
-      host,
-      _user,
-    );
+    _auth = MusicbrainzAuth(host);
+    _user = MusicbrainzUser(_auth, host);
+    _album = MusicbrainzAlbum(host, _user);
+    _artist = MusicbrainzArtist(host, _user);
     _browse = MusicbrainzBrowse();
     _core = MusicbrainzCore();
     _playlist = MusicbrainzPlaylist();

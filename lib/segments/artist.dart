@@ -1,3 +1,4 @@
+import 'package:gyawun_metadata_plugin/plugin.dart';
 import 'package:gyawun_metadata_plugin/segments/host_tools.dart';
 import 'package:gyawun_metadata_plugin/segments/user.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/iartist.dart';
@@ -8,10 +9,6 @@ import 'package:gyawun_metadata_sdk/metadata/models/pagination.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/track.dart';
 
 class MusicbrainzArtist extends IArtist {
-  final String mbUrl;
-  final String mbUriBase;
-  final String lbUrl;
-  final String lbLabsUrl;
   final playlistName = "__GYAWUN_ARTISTS__";
   final HostTools _host;
   final MusicbrainzUser user;
@@ -23,14 +20,7 @@ class MusicbrainzArtist extends IArtist {
   final bool labsFilter = true;
   final int labsSkip = 30;
 
-  MusicbrainzArtist(
-    this.mbUrl,
-    this.mbUriBase,
-    this.lbUrl,
-    this.lbLabsUrl,
-    this._host,
-    this.user,
-  );
+  MusicbrainzArtist(this._host, this.user);
 
   PaginatedResult<Album> _buildPaginatedAlbums(
     Map data,
@@ -49,7 +39,8 @@ class MusicbrainzArtist extends IArtist {
             artists: [],
             images: [],
             releaseDate: g['first-release-date'] ?? '',
-            externalUri: "${mbUriBase}release-group/${g['id'] as String}",
+            externalUri:
+                "${MusicbrainzPlugin.mbUriBase}release-group/${g['id'] as String}",
             totalTracks: 0,
             albumType: AlbumType.album,
           ),
@@ -115,7 +106,7 @@ class MusicbrainzArtist extends IArtist {
     return Artist(
       id: aId,
       name: aName,
-      externalUri: "${mbUriBase}artist/$aId",
+      externalUri: "${MusicbrainzPlugin.mbUriBase}artist/$aId",
       images: images,
       genres: genres.isNotEmpty ? genres : null,
       followers: null,
@@ -144,7 +135,7 @@ class MusicbrainzArtist extends IArtist {
             Artist(
               id: firstMbid,
               name: artistName,
-              externalUri: "${mbUriBase}artist/$firstMbid",
+              externalUri: "${MusicbrainzPlugin.mbUriBase}artist/$firstMbid",
             ),
           );
         }
@@ -159,7 +150,7 @@ class MusicbrainzArtist extends IArtist {
             artists: artists,
             images: [],
             releaseDate: '',
-            externalUri: "${mbUriBase}release/$releaseMbid",
+            externalUri: "${MusicbrainzPlugin.mbUriBase}release/$releaseMbid",
             totalTracks: 0,
             albumType: AlbumType.album,
           );
@@ -169,7 +160,7 @@ class MusicbrainzArtist extends IArtist {
               id: mbid,
               name: name,
               durationMs: 0,
-              externalUri: "${mbUriBase}recording/$mbid",
+              externalUri: "${MusicbrainzPlugin.mbUriBase}recording/$mbid",
               album: album,
               artists: artists,
             ),
@@ -202,7 +193,7 @@ class MusicbrainzArtist extends IArtist {
     int limit = 20,
   }) async {
     final data = await _host.fetchApi(
-      baseUrl: mbUrl,
+      baseUrl: MusicbrainzPlugin.mbUrl,
       path: "release-group",
       query: {
         'artist': id,
@@ -218,7 +209,7 @@ class MusicbrainzArtist extends IArtist {
   @override
   Future<Artist> getArtist(String id) async {
     final Map mbData = await _host.fetchApi(
-      baseUrl: mbUrl,
+      baseUrl: MusicbrainzPlugin.mbUrl,
       path: "artist/$id",
       query: {'inc': 'url-rels+release-groups+genres', 'fmt': 'json'},
     );
@@ -262,7 +253,7 @@ class MusicbrainzArtist extends IArtist {
     final String algorithm =
         "session_based_days_${labsDays}_session_${labsSession}_contribution_${labsContribution}_threshold_${labsThreshold}_limit_${labsLimit}_filter_${filterStr}_skip_$labsSkip";
     final rawSimilar = await _host.fetchApi(
-      baseUrl: lbLabsUrl,
+      baseUrl: MusicbrainzPlugin.lbLabsUrl,
       path: "/similar-artists/json",
       query: {'artist_mbids': id, 'algorithm': algorithm},
     );
@@ -309,7 +300,7 @@ class MusicbrainzArtist extends IArtist {
     int limit = 20,
   }) async {
     final dynamic data = await _host.fetchApi(
-      baseUrl: lbUrl,
+      baseUrl: MusicbrainzPlugin.lbUrl,
       path: "popularity/top-recordings-for-artist/$id",
     );
 

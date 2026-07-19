@@ -1,3 +1,4 @@
+import 'package:gyawun_metadata_plugin/plugin.dart';
 import 'package:gyawun_metadata_plugin/segments/host_tools.dart';
 import 'package:gyawun_metadata_plugin/segments/user.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/ialbum.dart';
@@ -8,13 +9,11 @@ import 'package:gyawun_metadata_sdk/metadata/models/pagination.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/track.dart';
 
 class MusicbrainzAlbum extends IAlbum {
-  final String mbUrl;
-  final String mbUriBase;
   final playlistName = "__GYAWUN_ALBUMS__";
   final HostTools _host;
   final MusicbrainzUser user;
 
-  MusicbrainzAlbum(this.mbUrl, this.mbUriBase, this._host, this.user);
+  MusicbrainzAlbum(this._host, this.user);
 
   Album _buildAlbum(Map releaseData, Map coverData) {
     Map? cover;
@@ -54,7 +53,7 @@ class MusicbrainzAlbum extends IAlbum {
         Artist(
           id: aId,
           name: a['name'] as String,
-          externalUri: "${mbUriBase}artist/$aId",
+          externalUri: "${MusicbrainzPlugin.mbUriBase}artist/$aId",
         ),
       );
     }
@@ -64,7 +63,8 @@ class MusicbrainzAlbum extends IAlbum {
       artists: artists,
       images: images,
       releaseDate: releaseData['date'] ?? '',
-      externalUri: "${mbUriBase}release/${releaseData['id'] as String}",
+      externalUri:
+          "${MusicbrainzPlugin.mbUriBase}release/${releaseData['id'] as String}",
       totalTracks: 0,
       albumType: AlbumType.album,
     );
@@ -88,7 +88,7 @@ class MusicbrainzAlbum extends IAlbum {
           Artist(
             id: aId,
             name: a['name'] as String,
-            externalUri: "${mbUriBase}artist/$aId",
+            externalUri: "${MusicbrainzPlugin.mbUriBase}artist/$aId",
           ),
         );
       }
@@ -98,7 +98,7 @@ class MusicbrainzAlbum extends IAlbum {
           id: t['id'] as String,
           name: t['title'] as String,
           durationMs: (t['length'] as int?) ?? 0,
-          externalUri: "$mbUriBase/recording/${t['id']}",
+          externalUri: "${MusicbrainzPlugin.mbUriBase}recording/${t['id']}",
           album: album,
           artists: artists,
         ),
@@ -115,7 +115,7 @@ class MusicbrainzAlbum extends IAlbum {
   @override
   Future<Album> getAlbum(String id) async {
     final releaseData = await _host.fetchApi(
-      baseUrl: mbUrl,
+      baseUrl: MusicbrainzPlugin.mbUrl,
       path: "release/$id",
       headers: {},
       query: {'inc': 'artist-credits', 'fmt': 'json'},
@@ -135,7 +135,7 @@ class MusicbrainzAlbum extends IAlbum {
   }) async {
     final album = await getAlbum(id);
     final tracksData = await _host.fetchApi(
-      baseUrl: mbUrl,
+      baseUrl: MusicbrainzPlugin.mbUrl,
       path: "recording",
       query: {
         'release': id,
