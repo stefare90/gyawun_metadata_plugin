@@ -1,5 +1,7 @@
 import 'package:gyawun_metadata_plugin/plugin.dart';
+import 'package:gyawun_metadata_plugin/segments/album.dart';
 import 'package:gyawun_metadata_plugin/segments/host_tools.dart';
+import 'package:gyawun_metadata_plugin/segments/track.dart';
 import 'package:gyawun_metadata_plugin/segments/user.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/iartist.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/album.dart';
@@ -22,77 +24,62 @@ class MusicbrainzArtist extends IArtist {
 
   MusicbrainzArtist(this._host, this.user);
 
-  PaginatedResult<Album> _buildPaginatedAlbums(
-    Map data,
-    int offset,
-    int limit,
-  ) {
-    final List<Album> items = [];
-    final List? groups = data['release-groups'] as List?;
-    if (groups != null) {
-      for (final gObj in groups) {
-        final Map g = gObj as Map;
-        items.add(
-          Album(
-            id: g['id'] as String,
-            name: g['title'] as String,
-            artists: [],
-            images: [],
-            releaseDate: g['first-release-date'] ?? '',
-            externalUri:
-                "${MusicbrainzPlugin.mbUriBase}release-group/${g['id'] as String}",
-            totalTracks: 0,
-            albumType: AlbumType.album,
-          ),
-        );
-      }
-    }
-    final int total = (data['release-group-count'] as int?) ?? items.length;
-    return PaginatedResult<Album>(
-      items: items,
-      total: total,
-      offset: offset,
-      limit: limit,
-    );
-  }
-
-  Artist _buildArtist(Map mbData, Map? deezerData) {
+  static Artist buildArtist(Map mbData, Map? wikidataData) {
     final String aId = mbData['id'] as String;
     final String aName = mbData['name'] as String;
 
     final List<Image> images = [];
 
-    if (deezerData != null) {
-      final List<String> keys = [
-        'picture_small',
-        'picture_medium',
-        'picture_big',
-        'picture_xl',
-      ];
-      for (var i = 0; i < keys.length; i++) {
-        final String key = keys[i];
-        final String? url = deezerData[key] as String?;
-        if (url != null && url.isNotEmpty) {
-          int? size;
-          final List<String> segments = url.split('/');
-          if (segments.isNotEmpty) {
-            final String lastSegment = segments.last;
-            final List<String> dashParts = lastSegment.split('-');
-            if (dashParts.isNotEmpty) {
-              final String sizePart = dashParts[0];
-              final List<String> xParts = sizePart.split('x');
-              if (xParts.isNotEmpty) {
-                size = int.tryParse(xParts[0]);
-              }
-            }
+    if (wikidataData != null) {
+      final claims = wikidataData['claims'];
+      if (claims != null) {
+        final p18 = claims['P18'];
+        if (p18 != null && (p18 as List).isNotEmpty) {
+          final Map firstClaim = p18[0] as Map;
+          final Map? mainsnak = firstClaim['mainsnak'] as Map?;
+          final Map? datavalue = mainsnak?['datavalue'] as Map?;
+          final String? imageName = datavalue?['value'] as String?;
+          if (imageName != null && imageName.isNotEmpty) {
+            final String encodedName = Uri.encodeComponent(imageName);
+            images.add(
+              Image(
+                url:
+                    "https://commons.wikimedia.org/wiki/Special:FilePath/$encodedName?width=56",
+                width: 56,
+                height: 56,
+              ),
+            );
+            images.add(
+              Image(
+                url:
+                    "https://commons.wikimedia.org/wiki/Special:FilePath/$encodedName?width=250",
+                width: 250,
+                height: 250,
+              ),
+            );
+            images.add(
+              Image(
+                url:
+                    "https://commons.wikimedia.org/wiki/Special:FilePath/$encodedName?width=500",
+                width: 500,
+                height: 500,
+              ),
+            );
+            images.add(
+              Image(
+                url:
+                    "https://commons.wikimedia.org/wiki/Special:FilePath/$encodedName?width=1000",
+                width: 1000,
+                height: 1000,
+              ),
+            );
           }
-          images.add(Image(url: url, width: size, height: size));
         }
       }
     }
 
     final List<String> genres = [];
-    final List? genresRaw = mbData['genres'] as List?;
+    final genresRaw = mbData['genres'];
     if (genresRaw != null) {
       for (final gObj in genresRaw) {
         final Map g = gObj as Map;
@@ -113,79 +100,6 @@ class MusicbrainzArtist extends IArtist {
     );
   }
 
-  PaginatedResult<Track> _buildTopTracks(List rawList, int offset, int limit) {
-    final List<Track> items = [];
-
-    for (final rObj in rawList) {
-      final Map r = rObj as Map;
-      final String? mbid = r['recording_mbid'] as String?;
-      final String? name = r['recording_name'] as String?;
-
-      if (mbid != null && name != null) {
-        final List<Artist> artists = [];
-        final String? artistName = r['artist_name'] as String?;
-        final List? artistMbids = r['artist_mbids'] as List?;
-
-        if (artistMbids != null &&
-            artistMbids.isNotEmpty &&
-            artistName != null) {
-          final List mbidList = artistMbids as List;
-          final String firstMbid = mbidList[0] as String;
-          artists.add(
-            Artist(
-              id: firstMbid,
-              name: artistName,
-              externalUri: "${MusicbrainzPlugin.mbUriBase}artist/$firstMbid",
-            ),
-          );
-        }
-
-        final String? releaseMbid = r['release_mbid'] as String?;
-        final String? releaseName = r['release_name'] as String?;
-
-        if (releaseMbid != null && releaseName != null) {
-          final album = Album(
-            id: releaseMbid,
-            name: releaseName,
-            artists: artists,
-            images: [],
-            releaseDate: '',
-            externalUri: "${MusicbrainzPlugin.mbUriBase}release/$releaseMbid",
-            totalTracks: 0,
-            albumType: AlbumType.album,
-          );
-
-          items.add(
-            Track(
-              id: mbid,
-              name: name,
-              durationMs: 0,
-              externalUri: "${MusicbrainzPlugin.mbUriBase}recording/$mbid",
-              album: album,
-              artists: artists,
-            ),
-          );
-        }
-      }
-    }
-
-    final List<Track> paged = [];
-    int end = offset + limit;
-    if (end > items.length) {
-      end = items.length;
-    }
-    for (int j = offset; j < end; j++) {
-      paged.add(items[j]);
-    }
-
-    return PaginatedResult<Track>(
-      items: paged,
-      total: items.length,
-      offset: offset,
-      limit: limit,
-    );
-  }
-
   @override
   Future<PaginatedResult<Album>> albums(
     String id, {
@@ -194,16 +108,61 @@ class MusicbrainzArtist extends IArtist {
   }) async {
     final data = await _host.fetchApi(
       baseUrl: MusicbrainzPlugin.mbUrl,
-      path: "release-group",
+      path: "release",
       query: {
         'artist': id,
         'type': 'album',
-        'limit': limit.toString(),
+        'status': 'official',
+        'limit': '100',
         'offset': offset.toString(),
+        'inc': 'artist-credits+release-groups',
         'fmt': 'json',
       },
     );
-    return _buildPaginatedAlbums(data, offset, limit);
+    if (data == null) {
+      return PaginatedResult<Album>(
+        items: [],
+        total: 0,
+        offset: offset,
+        limit: limit,
+      );
+    }
+    final rawReleases = data['releases'];
+    final List<Album> uniqueAlbums = [];
+    final List<String> seenGroups = [];
+    for (final rObj in rawReleases) {
+      final Map r = rObj as Map;
+      final Map? group = r['release-group'] as Map?;
+      if (group != null) {
+        final String groupId = group['id'] as String;
+        bool alreadySeen = false;
+        for (final seenId in seenGroups) {
+          if (seenId == groupId) {
+            alreadySeen = true;
+          }
+        }
+        if (!alreadySeen) {
+          seenGroups.add(groupId);
+          uniqueAlbums.add(MusicbrainzAlbum.buildAlbum(r));
+        }
+      }
+    }
+    final List<Album> paged = [];
+    var totalUnique = uniqueAlbums.length;
+    int end = offset + limit;
+    if (end > totalUnique) {
+      end = totalUnique;
+    }
+    for (var i = offset; i < end; i++) {
+      paged.add(uniqueAlbums[i]);
+    }
+    final int total = (data['release-count'] as int?) ?? totalUnique;
+    return PaginatedResult<Album>(
+      items: paged,
+      total: total,
+      offset: offset,
+      limit: limit,
+    );
   }
 
   @override
@@ -213,34 +172,40 @@ class MusicbrainzArtist extends IArtist {
       path: "artist/$id",
       query: {'inc': 'url-rels+release-groups+genres', 'fmt': 'json'},
     );
-    String? deezerId;
+    String? wikidataId;
     final List? relations = mbData['relations'] as List?;
     if (relations != null) {
       for (final rObj in relations) {
         final Map rel = rObj as Map;
-        final Map? urlObj = rel['url'] as Map?;
-        if (urlObj != null) {
-          final String? uri = urlObj['resource'] as String?;
-          if (uri != null && uri.contains('deezer.com/')) {
-            final List<String> segments = uri.split('/');
-            for (var i = 0; i < segments.length; i++) {
-              if (segments[i] == 'artist' && (i + 1) < segments.length) {
-                deezerId = segments[i + 1];
+        final String? relType = rel['type'] as String?;
+        if (relType == 'wikidata') {
+          final Map? urlObj = rel['url'] as Map?;
+          if (urlObj != null) {
+            final String? uri = urlObj['resource'] as String?;
+            if (uri != null) {
+              final List<String> segments = uri.split('/');
+              if (segments.isNotEmpty) {
+                wikidataId = segments.last;
               }
             }
           }
         }
       }
     }
-    Map? deezerData;
-    if (deezerId != null) {
-      deezerData = await _host.fetchApi(
-        baseUrl: "https://api.deezer.com",
-        path: "/artist/$deezerId",
+    Map? wikidataData;
+    if (wikidataId != null) {
+      wikidataData = await _host.fetchApi(
+        baseUrl: "https://www.wikidata.org",
+        path: "/w/api.php",
+        query: {
+          'action': 'wbgetclaims',
+          'property': 'P18',
+          'entity': wikidataId,
+          'format': 'json',
+        },
       );
     }
-
-    return _buildArtist(mbData, deezerData);
+    return buildArtist(mbData, wikidataData);
   }
 
   @override
@@ -300,10 +265,106 @@ class MusicbrainzArtist extends IArtist {
     int limit = 20,
   }) async {
     final dynamic data = await _host.fetchApi(
-      baseUrl: MusicbrainzPlugin.lbUrl,
-      path: "popularity/top-recordings-for-artist/$id",
+      baseUrl: MusicbrainzPlugin.mbUrl,
+      path: "release",
+      query: {
+        'fmt': 'json',
+        'artist': id,
+        'limit': '5',
+        'offset': '0',
+        'inc': 'artist-credits+recordings+ratings+isrcs+release-groups',
+      },
     );
 
-    return _buildTopTracks(data as List, offset, limit);
+    if (data == null || data['releases'] == null) {
+      return PaginatedResult<Track>(
+        items: [],
+        total: 0,
+        offset: offset,
+        limit: limit,
+      );
+    }
+    final rawReleases = data['releases'];
+    final List<Map> tracksRaw = [];
+
+    for (final rObj in rawReleases) {
+      final Map release = rObj as Map;
+      final mediaList = release['media'];
+
+      if (mediaList != null) {
+        final List mediaBackup = List.from(mediaList);
+        release['media'] = null;
+
+        for (final mObj in mediaBackup) {
+          final Map media = mObj as Map;
+          final tracksList = media['tracks'];
+
+          if (tracksList != null) {
+            for (final tObj in tracksList) {
+              final Map track = tObj as Map;
+              final Map? recording = track['recording'] as Map?;
+              if (recording != null) {
+                recording['releases'] = [release];
+                tracksRaw.add(recording);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    final List<Map> uniqueTracksRaw = [];
+    final List<String> seenTitles = [];
+
+    for (final recording in tracksRaw) {
+      final String? title = recording['title'] as String?;
+      if (title != null) {
+        if (!seenTitles.contains(title)) {
+          seenTitles.add(title);
+          uniqueTracksRaw.add(recording);
+        }
+      }
+    }
+
+    uniqueTracksRaw.sort((a, b) {
+      final ratingA = a['rating'];
+      final ratingB = b['rating'];
+      final votesA = ratingA != null
+          ? (ratingA['votes-count'] as num? ?? 0)
+          : 0.0;
+      final votesB = ratingB != null
+          ? (ratingB['votes-count'] as num? ?? 0)
+          : 0.0;
+      final valA = ratingA != null ? (ratingA['value'] as num? ?? 0.0) : 0.0;
+      final valB = ratingB != null ? (ratingB['value'] as num? ?? 0.0) : 0.0;
+      final aAvg = votesA > 0.0 ? valA / votesA : 0.0;
+      final bAvg = votesB > 0.0 ? valB / votesB : 0.0;
+      return bAvg.compareTo(aAvg);
+    });
+
+    final List<Track> items = [];
+    for (final recording in uniqueTracksRaw) {
+      items.add(MusicbrainzTrack.buildTrack(recording));
+    }
+
+    final int localOffset = offset.toInt();
+    final int localLimit = limit.toInt();
+
+    int end = localOffset + localLimit;
+    if (end > items.length) {
+      end = items.length;
+    }
+
+    final List<Track> paged = [];
+    for (int i = localOffset; i < end; i++) {
+      paged.add(items[i]);
+    }
+
+    return PaginatedResult<Track>(
+      items: paged,
+      total: items.length,
+      offset: localOffset,
+      limit: localLimit,
+    );
   }
 }

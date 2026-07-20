@@ -17,7 +17,7 @@ class MusicbrainzAlbum extends IAlbum {
 
   static Album buildAlbum(Map releaseData) {
     final List<Image> images = [];
-    final Map? coverArt = releaseData['cover-art-archive'] as Map?;
+    final coverArt = releaseData['cover-art-archive'];
     if (coverArt != null) {
       final bool? hasFront = coverArt['front'] as bool?;
       if (hasFront == true) {
@@ -39,7 +39,7 @@ class MusicbrainzAlbum extends IAlbum {
       }
     }
     final List<Artist> artists = [];
-    final List? credits = releaseData['artist-credit'] as List?;
+    final credits = releaseData['artist-credit'];
     if (credits != null) {
       for (final cObj in credits) {
         final Map c = cObj as Map;
@@ -55,7 +55,7 @@ class MusicbrainzAlbum extends IAlbum {
       }
     }
     int trackCount = 0;
-    final List? mediaList = releaseData['media'] as List?;
+    final mediaList = releaseData['media'];
     if (mediaList != null) {
       for (final mObj in mediaList) {
         final Map m = mObj as Map;
