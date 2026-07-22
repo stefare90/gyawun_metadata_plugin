@@ -247,14 +247,14 @@ class MusicbrainzArtist extends IArtist {
   @override
   Future<void> save(List<String> ids) async {
     for (final id in ids) {
-      user.saveArtist(id: id);
+      await user.saveArtist(id: id);
     }
   }
 
   @override
   Future<void> unsave(List<String> ids) async {
     for (final id in ids) {
-      user.unsaveArtist(id: id);
+      await user.unsaveArtist(id: id);
     }
   }
 

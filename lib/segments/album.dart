@@ -155,14 +155,14 @@ class MusicbrainzAlbum extends IAlbum {
   @override
   Future<void> save(List<String> ids) async {
     for (String id in ids) {
-      user.saveAlbum(id: id);
+      await user.saveAlbum(id: id);
     }
   }
 
   @override
   Future<void> unsave(List<String> ids) async {
     for (String id in ids) {
-      user.unsaveAlbum(id: id);
+      await user.unsaveAlbum(id: id);
     }
   }
 }
