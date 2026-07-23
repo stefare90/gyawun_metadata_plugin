@@ -696,4 +696,28 @@ class MusicbrainzUser extends IUser {
       }
     }
   }
+
+  Future<void> savePlaylist({required String id}) async {
+    final saveRequest = PluginRequest(
+      url: "${MusicbrainzPlugin.lbUrl}playlist/$id/copy",
+      method: 'POST',
+      headers: {'Authorization': 'Token ${_auth.token}'},
+    );
+    final response = await _host.env.network.send(saveRequest);
+    if (response.statusCode != 200) {
+      throw Exception("Failed to save playlist: ${response.body}");
+    }
+  }
+
+  Future<void> unsavePlaylist({required String id}) async {
+    final deleteRequest = PluginRequest(
+      url: "${MusicbrainzPlugin.lbUrl}playlist/$id/delete",
+      method: 'POST',
+      headers: {'Authorization': 'Token ${_auth.token}'},
+    );
+    final response = await _host.env.network.send(deleteRequest);
+    if (response.statusCode != 200) {
+      throw Exception("Failed to delete playlist: ${response.body}");
+    }
+  }
 }

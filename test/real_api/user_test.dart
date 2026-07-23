@@ -8,7 +8,6 @@ import '_support/storage_service.dart';
 import '_support/ui_service.dart';
 
 void main() async {
-  // Configured with a 3-minute timeout to accommodate the 1-second rate-limiting delays
   group("User interface test", () {
     late HostEnv hostEnv;
     late IMetadataPlugin nativePlugin;
@@ -26,7 +25,6 @@ void main() async {
       nativePlugin = getNativePlugin(hostEnv);
       evalPlugin = getEvalPlugin(hostEnv);
 
-      // Authenticate both plugins once during setup to share authenticated session state
       when(
         () => mockUi.showForm(
           title: any(named: 'title'),
@@ -41,12 +39,21 @@ void main() async {
     });
 
     tearDownAll(() async {
-      // Logout both sessions cleanly after all tests are finished
       await nativePlugin.auth.logout();
       await evalPlugin.auth.logout();
     });
 
-    // --- Modular Test Helper Methods ---
+    Future<void> _cleanLeftovers(
+      IMetadataPlugin plugin,
+      List<String> names,
+    ) async {
+      final playlists = await plugin.user.savedPlaylists(offset: 0, limit: 100);
+      for (final item in playlists.items) {
+        if (names.contains(item.name)) {
+          await plugin.playlist.deletePlaylist(item.id);
+        }
+      }
+    }
 
     Future<void> testUserID(IMetadataPlugin plugin) async {
       final userData = await plugin.user.me();
@@ -54,13 +61,10 @@ void main() async {
     }
 
     Future<void> testAlbumLibrary(IMetadataPlugin plugin) async {
-      // "Love Me Do / P.S. I Love You" release-group mbid
       final String testAlbumId = "5db85281-934d-36e5-865c-1922ad82a948";
 
-      // 1. Save album using the official SDK interface
       await plugin.album.save([testAlbumId]);
 
-      // 2. Retrieve saved albums list and assert presence
       final savedAlbumsBefore = await plugin.user.savedAlbums(
         offset: 0,
         limit: 5,
@@ -76,12 +80,10 @@ void main() async {
           break;
         }
       }
-      expect(albumFoundBefore, isTrue); // MUST be present in library
+      expect(albumFoundBefore, isTrue);
 
-      // 3. Unsave the album using the official SDK interface
       await plugin.album.unsave([testAlbumId]);
 
-      // 4. Retrieve saved albums list again and assert absence (Verifying unsave actually worked)
       final savedAlbumsAfter = await plugin.user.savedAlbums(
         offset: 0,
         limit: 5,
@@ -93,17 +95,14 @@ void main() async {
           break;
         }
       }
-      expect(albumFoundAfter, isFalse); // MUST be gone from library
+      expect(albumFoundAfter, isFalse);
     }
 
     Future<void> testArtistLibrary(IMetadataPlugin plugin) async {
-      // "The Beatles" artist mbid
       final String testArtistId = "b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d";
 
-      // 1. Save artist using the official SDK interface
       await plugin.artist.save([testArtistId]);
 
-      // 2. Retrieve saved artists list and assert presence
       final savedArtistsBefore = await plugin.user.savedArtists(
         offset: 0,
         limit: 5,
@@ -119,12 +118,10 @@ void main() async {
           break;
         }
       }
-      expect(artistFoundBefore, isTrue); // MUST be present in library
+      expect(artistFoundBefore, isTrue);
 
-      // 3. Unsave the artist using the official SDK interface
       await plugin.artist.unsave([testArtistId]);
 
-      // 4. Retrieve saved artists list again and assert absence (Verifying unsave actually worked)
       final savedArtistsAfter = await plugin.user.savedArtists(
         offset: 0,
         limit: 5,
@@ -136,17 +133,14 @@ void main() async {
           break;
         }
       }
-      expect(artistFoundAfter, isFalse); // MUST be gone from library
+      expect(artistFoundAfter, isFalse);
     }
 
     Future<void> testTrackLibrary(IMetadataPlugin plugin) async {
-      // "Love Me Do" recording mbid
       final String testTrackId = "f87eb4dd-7e3c-4365-a3c8-f144696f5952";
 
-      // 1. Save track (Love) using the official SDK interface
       await plugin.track.save([testTrackId]);
 
-      // 2. Retrieve saved tracks and assert presence
       final savedTracksBefore = await plugin.user.savedTracks(
         offset: 0,
         limit: 5,
@@ -162,12 +156,10 @@ void main() async {
           break;
         }
       }
-      expect(trackFoundBefore, isTrue); // MUST be present in loved tracks list
+      expect(trackFoundBefore, isTrue);
 
-      // 3. Unsave track (Unlove) using the official SDK interface
       await plugin.track.unsave([testTrackId]);
 
-      // 4. Retrieve saved tracks list again and assert absence (Verifying unsave actually worked)
       final savedTracksAfter = await plugin.user.savedTracks(
         offset: 0,
         limit: 5,
@@ -179,13 +171,73 @@ void main() async {
           break;
         }
       }
-      expect(trackFoundAfter, isFalse); // MUST be gone from loved tracks list
+      expect(trackFoundAfter, isFalse);
     }
 
-    // TODO: Implement JSPF Playlist save, unsave, and savedPlaylists lifecycle testing
-    // once IPlaylist write functions are implemented during IPlaylist class tasks.
+    Future<void> testPlaylistLibrary(IMetadataPlugin plugin) async {
+      final String tempName = "Spotube User Playlist Test";
+      final String copyName = "Copy of Spotube User Playlist Test";
 
-    // --- Native Test Suite Group ---
+      await _cleanLeftovers(plugin, [tempName, copyName]);
+
+      final savedBefore = await plugin.user.savedPlaylists(
+        offset: 0,
+        limit: 100,
+      );
+      expect(savedBefore.items.any((p) => p.name == tempName), isFalse);
+
+      final playlist = await plugin.playlist.createPlaylist(
+        "Danfreemanold90",
+        tempName,
+        description: "User test playlist",
+        public_: false,
+      );
+      expect(playlist, isNotNull);
+      expect(playlist!.id, isNotEmpty);
+
+      final savedAfterCreate = await plugin.user.savedPlaylists(
+        offset: 0,
+        limit: 100,
+      );
+      expect(savedAfterCreate.items.any((p) => p.name == tempName), isTrue);
+
+      await plugin.playlist.save(playlist.id);
+
+      final savedAfterCopy = await plugin.user.savedPlaylists(
+        offset: 0,
+        limit: 100,
+      );
+      bool copyFound = false;
+      String? copyMbid;
+      for (final item in savedAfterCopy.items) {
+        if (item.name == copyName) {
+          copyFound = true;
+          copyMbid = item.id;
+          break;
+        }
+      }
+      expect(copyFound, isTrue);
+
+      if (copyMbid != null) {
+        await plugin.playlist.unsave(copyMbid);
+      }
+
+      await plugin.playlist.unsave(playlist.id);
+
+      final savedAfterCleanup = await plugin.user.savedPlaylists(
+        offset: 0,
+        limit: 100,
+      );
+      expect(
+        savedAfterCleanup.items.any(
+          (p) => p.name == tempName || p.name == copyName,
+        ),
+        isFalse,
+      );
+
+      expect(() => plugin.playlist.getPlaylist(playlist.id), throwsException);
+    }
+
     group("Native tests", () {
       test(
         'Test user_id retrieval (me)',
@@ -203,9 +255,12 @@ void main() async {
         'Test track library lifecycle (save -> savedTracks -> unsave)',
         () async => await testTrackLibrary(nativePlugin),
       );
+      test(
+        'Test playlist library lifecycle (create -> savedPlaylists -> save -> unsave)',
+        () async => await testPlaylistLibrary(nativePlugin),
+      );
     });
 
-    // --- Eval Test Suite Group ---
     group("Eval tests", () {
       test(
         'Test user_id retrieval (me)',
@@ -222,6 +277,10 @@ void main() async {
       test(
         'Test track library lifecycle (save -> savedTracks -> unsave)',
         () async => await testTrackLibrary(evalPlugin),
+      );
+      test(
+        'Test playlist library lifecycle (create -> savedPlaylists -> save -> unsave)',
+        () async => await testPlaylistLibrary(evalPlugin),
       );
     });
   }, timeout: Timeout(Duration(minutes: 3)));
