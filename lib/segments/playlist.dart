@@ -20,6 +20,10 @@ class MusicbrainzPlaylist extends IPlaylist {
 
   @override
   Future<Map<String, dynamic>> getPlaylist(String id) async {
+    if (id.startsWith("radio:")) {
+      return await _getRadioPlaylistMetadata(id);
+    }
+
     final headers = <String, String>{};
     if (_user.token != "") {
       headers['Authorization'] = 'Token ${_user.token}';
@@ -46,6 +50,10 @@ class MusicbrainzPlaylist extends IPlaylist {
     int offset = 0,
     int limit = 20,
   }) async {
+    if (id.startsWith("radio:")) {
+      return await _getRadioPlaylistTracks(id, offset: offset, limit: limit);
+    }
+
     final playlistData = await getPlaylist(id);
     final playlist = playlistData['playlist'];
     final tracks = playlist?['track'];
@@ -363,5 +371,133 @@ class MusicbrainzPlaylist extends IPlaylist {
     if (response.statusCode != 200) {
       throw Exception("Failed to edit playlist: ${response.body}");
     }
+  }
+
+  Future<Map<String, dynamic>> _getRadioPlaylistMetadata(String id) async {
+    var title = "Radio";
+    var description = "Algorithmic recommendation radio";
+
+    if (id.startsWith("radio:artist:")) {
+      final artistName = id.substring(13);
+      title = "$artistName Radio";
+      description = "Algorithmic recommendation radio based on $artistName";
+    } else if (id.startsWith("radio:tag:")) {
+      final tag = id.substring(10);
+
+      var moodTitle = "Mood";
+      if (tag == "romantic") moodTitle = "Romantic Mood";
+      if (tag == "chill") moodTitle = "Chill Mood";
+      if (tag == "happy") moodTitle = "Happy Mood";
+      if (tag == "sad") moodTitle = "Sad Mood";
+      if (tag == "focus") moodTitle = "Focus Mood";
+
+      title = moodTitle;
+      description =
+          "Algorithmic recommendations generated based on the $tag mood";
+    }
+
+    final Map<String, dynamic> mockPlaylist = {
+      'playlist': {
+        'title': title,
+        'annotation': description,
+        'creator': 'listenbrainz',
+        'identifier': 'https://listenbrainz.org/playlist/$id',
+        'track': [],
+        'extension': {
+          'https://musicbrainz.org/doc/jspf#playlist': {'public': false},
+        },
+      },
+    };
+    return mockPlaylist;
+  }
+
+  Future<PaginatedResult<Track>> _getRadioPlaylistTracks(
+    String id, {
+    int offset = 0,
+    int limit = 20,
+  }) async {
+    String prompt = "";
+    if (id.startsWith("radio:artist:")) {
+      final artistName = id.substring(13);
+      prompt = "artist:($artistName)";
+    } else if (id.startsWith("radio:tag:")) {
+      final tag = id.substring(10);
+      prompt = "tag:($tag)";
+    }
+
+    final Map lbRadioData = await _host.fetchApi(
+      baseUrl: MusicbrainzPlugin.lbUrl,
+      path: "explore/lb-radio",
+      query: {'prompt': prompt, 'mode': 'easy'},
+    );
+
+    final List<Track> items = [];
+    var totalCount = 0;
+
+    final Map? payload = lbRadioData['payload'] as Map?;
+    final Map? jspf = payload?['jspf'] as Map?;
+    final Map? playlist = jspf?['playlist'] as Map?;
+    final tracks = playlist?['track'];
+
+    if (tracks != null) {
+      final List tracksList = List.from(tracks);
+      totalCount = tracksList.length;
+
+      var index = 0;
+      for (final trackObj in tracksList) {
+        if (index >= offset && index < offset + limit) {
+          final track = trackObj;
+          final identifiers = track['identifier'];
+
+          if (identifiers != null) {
+            final String identifier = identifiers[0] as String;
+            final List parts = identifier.split('/');
+            final String trackId = parts[parts.length - 1] as String;
+            final titleVal = track['title'];
+            final String title = titleVal != null
+                ? titleVal.toString()
+                : "Unknown Track";
+            final creatorVal = track['creator'];
+            final String creator = creatorVal != null
+                ? creatorVal.toString()
+                : "Unknown Artist";
+
+            final List<Artist> artists = [
+              Artist(id: '', name: creator, externalUri: '', images: []),
+            ];
+
+            final Album album = Album(
+              id: '',
+              name: '',
+              artists: artists,
+              images: [],
+              releaseDate: '',
+              externalUri: '',
+              totalTracks: 0,
+              albumType: AlbumType.album,
+            );
+
+            items.add(
+              Track(
+                id: trackId,
+                name: title,
+                durationMs: 0,
+                externalUri: "https://musicbrainz.org/recording/$trackId",
+                album: album,
+                artists: artists,
+              ),
+            );
+          }
+        }
+        index++;
+      }
+    }
+
+    return PaginatedResult<Track>(
+      items: items,
+      total: totalCount,
+      offset: offset,
+      limit: limit,
+    );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:dart_eval/dart_eval_bridge.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/iui_service.dart';
 import 'package:gyawun_metadata_sdk/metadata_plugin_sdk.dart';
 import 'package:mocktail/mocktail.dart';
@@ -245,6 +246,112 @@ void main() async {
       expect(() => plugin.playlist.getPlaylist(playlist.id), throwsException);
     }
 
+    Future<void> testArtistRadioLifecycle(IMetadataPlugin plugin) async {
+      const String artistRadioId = "radio:artist:The Beatles";
+
+      final data = await plugin.playlist.getPlaylist(artistRadioId);
+      expect(data, isNotEmpty);
+      expect(data['playlist'], isNotNull);
+
+      final playlist = data['playlist'] as Map;
+      expect(playlist['title'], equals("The Beatles Radio"));
+      expect(playlist['creator'], equals("listenbrainz"));
+      expect(playlist['identifier'], contains(artistRadioId));
+
+      try {
+        final tracksPage1 = await plugin.playlist.tracks(
+          artistRadioId,
+          offset: 0,
+          limit: 2,
+        );
+        expect(tracksPage1, isA<PaginatedResult<Track>>());
+        expect(tracksPage1.offset, equals(0));
+        expect(tracksPage1.limit, equals(2));
+        expect(tracksPage1.items, isNotEmpty);
+
+        final tracksPage2 = await plugin.playlist.tracks(
+          artistRadioId,
+          offset: 1,
+          limit: 2,
+        );
+        expect(tracksPage2, isA<PaginatedResult<Track>>());
+        expect(tracksPage2.offset, equals(1));
+        expect(tracksPage2.limit, equals(2));
+        expect(tracksPage2.items, isNotEmpty);
+
+        if (tracksPage1.items.length > 1 && tracksPage2.items.isNotEmpty) {
+          final trackFromPage1 = tracksPage1.items[1];
+          final trackFromPage2 = tracksPage2.items[0];
+          expect(trackFromPage2.id, equals(trackFromPage1.id));
+        }
+      } catch (e) {
+        final String errorMsg = e is $Value
+            ? e.$value.toString()
+            : e.toString();
+
+        if (errorMsg.contains("LB Radio currently disabled")) {
+          print(
+            "⚠️ Warning: Skipping testArtistRadioLifecycle tracks fetch because ListenBrainz Radio is currently disabled due to high server load.",
+          );
+        } else {
+          rethrow;
+        }
+      }
+    }
+
+    Future<void> testMoodRadioLifecycle(IMetadataPlugin plugin) async {
+      const String moodRadioId = "radio:tag:chill";
+
+      final data = await plugin.playlist.getPlaylist(moodRadioId);
+      expect(data, isNotEmpty);
+      expect(data['playlist'], isNotNull);
+
+      final playlist = data['playlist'] as Map;
+      expect(playlist['title'], equals("Chill Mood"));
+      expect(playlist['creator'], equals("listenbrainz"));
+      expect(playlist['identifier'], contains(moodRadioId));
+
+      try {
+        final tracksPage1 = await plugin.playlist.tracks(
+          moodRadioId,
+          offset: 0,
+          limit: 2,
+        );
+        expect(tracksPage1, isA<PaginatedResult<Track>>());
+        expect(tracksPage1.offset, equals(0));
+        expect(tracksPage1.limit, equals(2));
+        expect(tracksPage1.items, isNotEmpty);
+
+        final tracksPage2 = await plugin.playlist.tracks(
+          moodRadioId,
+          offset: 1,
+          limit: 2,
+        );
+        expect(tracksPage2, isA<PaginatedResult<Track>>());
+        expect(tracksPage2.offset, equals(1));
+        expect(tracksPage2.limit, equals(2));
+        expect(tracksPage2.items, isNotEmpty);
+
+        if (tracksPage1.items.length > 1 && tracksPage2.items.isNotEmpty) {
+          final trackFromPage1 = tracksPage1.items[1];
+          final trackFromPage2 = tracksPage2.items[0];
+          expect(trackFromPage2.id, equals(trackFromPage1.id));
+        }
+      } catch (e) {
+        final String errorMsg = e is $Value
+            ? e.$value.toString()
+            : e.toString();
+
+        if (errorMsg.contains("LB Radio currently disabled")) {
+          print(
+            "⚠️ Warning: Skipping testMoodRadioLifecycle tracks fetch because ListenBrainz Radio is currently disabled due to high server load.",
+          );
+        } else {
+          rethrow;
+        }
+      }
+    }
+
     group("Native tests", () {
       test('Test getPlaylist', () async => await testGetPlaylist(nativePlugin));
       test(
@@ -262,6 +369,14 @@ void main() async {
       test(
         'Test update and save playlist lifecycle',
         () async => await testPlaylistUpdateAndSave(nativePlugin),
+      );
+      test(
+        'Test artist radio lifecycle',
+        () async => await testArtistRadioLifecycle(nativePlugin),
+      );
+      test(
+        'Test mood radio lifecycle',
+        () async => await testMoodRadioLifecycle(nativePlugin),
       );
     });
 
@@ -282,6 +397,14 @@ void main() async {
       test(
         'Test update and save playlist lifecycle',
         () async => await testPlaylistUpdateAndSave(evalPlugin),
+      );
+      test(
+        'Test artist radio lifecycle',
+        () async => await testArtistRadioLifecycle(evalPlugin),
+      );
+      test(
+        'Test mood radio lifecycle',
+        () async => await testMoodRadioLifecycle(evalPlugin),
       );
     });
   }, timeout: Timeout(Duration(minutes: 3)));
