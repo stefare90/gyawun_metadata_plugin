@@ -1,8 +1,8 @@
 # 🧩 Gyawun Metadata Plugin - Template
 
-Welcome to the official template for creating hot-swappable plugins for the **Gyawun** app.
+Welcome to the official template for creating hot-swappable plugins for the **Gyawun** app ecosystem.
 
-This repository provides a complete environment to develop, test, and compile metadata plugins. Once compiled, these plugins can be dynamically loaded into the Gyawun app to provide music metadata, search capabilities, and more.
+This repository provides a complete environment to develop, test, and compile metadata plugins. Once compiled into bytecode, these plugins can be dynamically loaded into the host app as compressed `.zip` packages to provide music metadata, user libraries, browse sections, search capabilities, and more.
 
 ---
 
@@ -10,68 +10,102 @@ This repository provides a complete environment to develop, test, and compile me
 
 | Path | Purpose |
 | :--- | :--- |
-| 📁 **`lib/`** | **Plugin Core.** Logic for fetching and parsing metadata. |
-| 📁 **`test/mock_api/`** | **Logic & Bridge Tests.** Fast, deterministic tests using `mocktail`. Tests both the Native plugin and the `dart_eval` Bytecode side-by-side. |
-| 📁 **`test/real_api/`** | **E2E Validation.** Tests against live servers (e.g., Musicbrainz). Also tests both Native and Bytecode environments. |
-| 📁 **`tool/`** | **Build System.** Scripts to compile Dart into `.evc` bytecode. |
-| 📄 **`plugin.json`** | **Manifest.** Metadata, permissions, and entry point definitions. |
+| 📁 **`lib/`** | **Plugin Core.** Logic for fetching and parsing metadata. `lib/main.dart` exposes `getPlugin`. |
+| 📁 **`test/mock_api/`** | **Logic & Bridge Tests.** Fast, deterministic tests using `mocktail`. Tests both Native and `dart_eval` Bytecode environments side-by-side. |
+| 📁 **`test/real_api/`** | **E2E Validation.** Tests against live external API servers. Also tests both Native and Bytecode environments.|
+| 📁 **`tool/`** | **Build System.** Scripts to compile Dart source code into `.evc` bytecode. |
+| 📄 **`plugin.json`** | **Manifest.** Plugin identity, capabilities, and SDK compatibility metadata. |
 
 ---
 
 ## 🚀 Development Workflow
 
-### 1. Configure the Manifest
-Open **`plugin.json`** and define your plugin's identity:
+### 1. Configure the Manifest (`plugin.json`)
+Open **`plugin.json`** and define your plugin's metadata:
 
 ```json
 {
+  "id": "org.gyawun.musicbrainz",
+  "packageId": "gyawun_metadata_plugin",
+  "type": "metadata",
+  "name": "MusicBrainz & ListenBrainz",
   "version": "1.0.0",
-  "name": "my_custom_provider",
-  "author": "Your Name",
-  "entryPoint": "getPlugin",
-  "abilities":["metadata", "search"],
-  "pluginApiVersion": "1.0.0"
+  "pluginSdkVersion": "1.0.0",
+  "author": "Your Name / Organization",
+  "description": "Metadata, recommendations, and user library provided by MusicBrainz and ListenBrainz.",
+  "repository": "https://github.com/your_org/your_plugin_repo"
 }
 ```
 
-### 2. Implement the Logic (`lib/`)
+#### Manifest Fields Reference
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | `String` | Unique plugin identifier using reverse-domain notation (e.g. `org.gyawun.spotify`). |
+| `packageId` | `String` | The Dart package name used internally by `dart_eval` (must match `name` in `pubspec.yaml`). |
+| `type` | `String` | Plugin type contract (e.g. `metadata` or `audioSource`). |
+| `name` | `String` | Human-readable plugin name displayed in the Host App UI. |
+| `version` | `String` | Plugin release version (semver format). |
+| `pluginSdkVersion` | `String` | Version of `gyawun_metadata_sdk` this plugin was compiled against (used for host compatibility checks). |
+| `author` | `String` | Author or organization name. |
+| `description` | `String` | Brief summary of the plugin's features and sources. |
+| `repository` | `String` | Public GitHub repository URL (used by the Host App to check for updates). |
+
+---
+
+## 2. Implement the Logic (`lib/`)
 Implement the interfaces provided by the SDK.
-> **Important:** Code in `lib/` must be `dart_eval` compatible. Avoid the `late` keyword (use nullable variables with getters instead) and always use `extends` rather than `implements` for SDK Bridge classes.
+
+#### ⚠️ Essential SDK Rules & Entry Point Contract:
+1. **Entry Point Contract**: `lib/main.dart` **must** export a top-level function with the exact signature:
+   ```dart
+   IMetadataPlugin getPlugin(HostEnv hostEnv) {
+     return MusicbrainzPlugin(hostEnv: hostEnv);
+   }
+   ```
+2. **`dart_eval` Compatibility**:
+   - Do **NOT** use `late` variables inside plugin classes.
+   - Do **NOT** perform nullable type casts like `as Map?` on dynamic JSON objects.
+   - Use standard `for-in` loops with explicit list typing before iteration.
+   - Always `extend` rather than `implement` SDK Bridge classes.
 
 ---
 
 ## 📦 Compilation & Testing
 
-Because our test suites evaluate both the Native plugin and the `dart_eval` engine in parallel, **you must compile the plugin before running the tests.**
+Because our test suites evaluate both the Native plugin and the `dart_eval` bytecode engine in parallel, **you must compile the plugin before running the tests.**
 
 ### 1. Compile to Bytecode
-Use the provided tool to generate the `.evc` file. Run this every time you change the code in `lib/`:
+Run the build script to generate the `.evc` bytecode file:
 ```bash
 dart run tool/build_plugin.dart
 ```
 This generates the **`plugin.evc`** file in the project root.
 
 ### 2. Run Mock API Tests (Daily Development)
-Verify your logic, JSON parsing, and bytecode compatibility using simulated API responses. This is extremely fast and won't trigger server rate limits.
+Verify your logic, JSON parsing, and bytecode compatibility using simulated API responses:
 ```bash
 dart test test/mock_api/
 ```
-*Tip: You can use your IDE's debugger on the "Native" test groups within these files to inspect variables in real-time.*
 
 ### 3. Run Real API Tests (Pre-Release Validation)
-Before publishing your plugin, ensure the external services are still responding with the expected data structures:
+Verify external live services before publishing:
 ```bash
 dart test test/real_api/
 ```
 
 ---
 
-## 📦 Final Export
+## 📦 Exporting & Packaging for Distribution
 
 When both Mock and Real API tests pass successfully:
 
-1. Ensure `plugin.evc` and `plugin.json` are up to date.
-2. Create a `.zip` archive containing these two files (and any required assets).
-3. Load the zip into the Gyawun app.
-
+1. Re-run `dart run tool/build_plugin.dart` to guarantee `plugin.evc` is up to date.
+2. Prepare the root files to bundle into your zip archive:
+   - `plugin.json` (manifest)
+   - `plugin.evc` (compiled bytecode)
+3. Create a `.zip` archive containing these root files (e.g., `musicbrainz_plugin.zip`).
+4. **Distribution Options**:
+   - **Local Import**: Load the `.zip` directly into the Host App using the File Picker.
+   - **GitHub Release**: Attach the `.zip` archive to a GitHub Release in your repository. The Host App will automatically discover and download it via the GitHub REST API!
 ---
