@@ -91,9 +91,22 @@ void main() async {
 
       final firstTrack = tracks.items.first;
       expect(firstTrack.name, equals("Loro"));
+
       expect(firstTrack.artists, isNotEmpty);
       expect(firstTrack.artists.first.name, equals("Marracash"));
+      expect(firstTrack.artists.first.id, isNotEmpty);
+      expect(
+        firstTrack.artists.first.externalUri,
+        contains("musicbrainz.org/artist/"),
+      );
+
       expect(firstTrack.album.name, equals("NOI, LORO, GLI ALTRI"));
+      expect(firstTrack.album.id, isNotEmpty);
+      expect(firstTrack.album.images, isNotEmpty);
+      expect(
+        firstTrack.album.images.first.url,
+        contains("coverartarchive.org/release/"),
+      );
     }
 
     Future<void> testPlaylistLifecycle(IMetadataPlugin plugin) async {
@@ -166,9 +179,13 @@ void main() async {
       final addedTrack = tracks.items.first;
       expect(addedTrack.id, equals(testTrackId));
       expect(addedTrack.name, equals("Loro"));
+
       expect(addedTrack.artists, isNotEmpty);
       expect(addedTrack.artists.first.name, equals("Marracash"));
+      expect(addedTrack.artists.first.id, isNotEmpty);
+
       expect(addedTrack.album.name, equals("NOI, LORO, GLI ALTRI"));
+      expect(addedTrack.album.images, isNotEmpty);
 
       await plugin.playlist.removeTracks(playlist.id, [testTrackId]);
 

@@ -383,6 +383,6 @@
   "generator": "pub",
   "generatorVersion": "3.12.2",
   "flutterRoot": "file:///opt/flutter",
-  "flutterVersion": "3.44.6",
+  "flutterVersion": "3.44.8",
   "pubCache": "file:///home/stefare/.pub-cache"
 }
