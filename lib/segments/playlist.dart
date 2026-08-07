@@ -116,8 +116,7 @@ class MusicbrainzPlaylist extends IPlaylist {
     return images;
   }
 
-  @override
-  Future<Map<String, dynamic>> getPlaylist(String id) async {
+  Future<Map> _fetchRawPlaylistData(String id) async {
     if (id.startsWith("radio:")) {
       return await _getRadioPlaylistMetadata(id);
     }
@@ -130,12 +129,70 @@ class MusicbrainzPlaylist extends IPlaylist {
       path: "playlist/$id",
       headers: headers,
     );
-    final rawMap = data as Map;
-    final Map<String, dynamic> resultMap = {};
-    for (final key in rawMap.keys) {
-      resultMap[key as String] = rawMap[key];
+    return data as Map;
+  }
+
+  @override
+  Future<Playlist> getPlaylist(String id) async {
+    final rawData = await _fetchRawPlaylistData(id);
+    final rawPlaylist = rawData['playlist'];
+    if (rawPlaylist == null) {
+      throw Exception("Playlist not found: $id");
     }
-    return resultMap;
+    final playlistMap = rawPlaylist as Map;
+    final titleVal = playlistMap['title'];
+    final String title = titleVal != null
+        ? titleVal.toString()
+        : "Untitled Playlist";
+    final descVal = playlistMap['annotation'];
+    final String desc = descVal != null ? descVal.toString() : "";
+    final creatorVal = playlistMap['creator'];
+    final String creator = creatorVal != null
+        ? creatorVal.toString()
+        : "Unknown";
+    var isPublic = false;
+    final ext = playlistMap['extension'];
+    if (ext != null && ext is Map) {
+      final mbExt = ext['https://musicbrainz.org/doc/jspf#playlist'];
+      if (mbExt != null && mbExt is Map) {
+        final publicVal = mbExt['public'];
+        isPublic = publicVal is bool ? publicVal : false;
+      }
+    }
+    final List<Image> playlistImages = [];
+    final tracks = playlistMap['track'];
+    if (tracks != null && tracks is List) {
+      for (final trackObj in tracks) {
+        if (trackObj != null) {
+          final albumMbid = _extractAlbumMbid(trackObj);
+          if (albumMbid.isNotEmpty) {
+            playlistImages.add(
+              Image(
+                url:
+                    "https://coverartarchive.org/release/$albumMbid/front-250.jpg",
+                width: 250,
+                height: 250,
+              ),
+            );
+          }
+        }
+        if (playlistImages.length >= 4) break;
+      }
+    }
+    return Playlist(
+      id: id,
+      name: title,
+      description: desc,
+      externalUri: "https://listenbrainz.org/playlist/$id",
+      owner: User(
+        id: creator,
+        name: creator,
+        externalUri: "https://listenbrainz.org/user/$creator",
+        images: [],
+      ),
+      images: playlistImages,
+      isPublic: isPublic,
+    );
   }
 
   @override
@@ -147,7 +204,7 @@ class MusicbrainzPlaylist extends IPlaylist {
     if (id.startsWith("radio:")) {
       return await _getRadioPlaylistTracks(id, offset: offset, limit: limit);
     }
-    final playlistData = await getPlaylist(id);
+    final playlistData = await _fetchRawPlaylistData(id);
     final playlist = playlistData['playlist'];
     final tracks = playlist?['track'];
     final List<Track> items = [];
@@ -267,7 +324,7 @@ class MusicbrainzPlaylist extends IPlaylist {
 
   @override
   Future<void> removeTracks(String playlistId, List<String> trackIds) async {
-    final playlistData = await getPlaylist(playlistId);
+    final playlistData = await _fetchRawPlaylistData(playlistId);
     final playlist = playlistData['playlist'];
     final tracks = playlist?['track'];
     if (playlist == null || tracks == null) return;
@@ -280,7 +337,7 @@ class MusicbrainzPlaylist extends IPlaylist {
       if (identifiers != null) {
         final identifier = identifiers[0] as String;
         final parts = identifier.split('/');
-        final mbid = parts[parts.length - 1].toString();
+        final mbid = parts[parts.length - 1];
         if (trackIds.contains(mbid)) {
           reversedIndices.insert(0, index);
         }
@@ -379,7 +436,7 @@ class MusicbrainzPlaylist extends IPlaylist {
     bool? public_,
     bool? collaborative,
   }) async {
-    final playlistData = await getPlaylist(playlistId);
+    final playlistData = await _fetchRawPlaylistData(playlistId);
     final playlist = playlistData['playlist'];
     if (playlist == null) return;
     final titleVal = playlist['title'];
@@ -491,9 +548,9 @@ class MusicbrainzPlaylist extends IPlaylist {
           final track = trackObj;
           final identifiers = track['identifier'];
           if (identifiers != null) {
-            final identifier = identifiers[0].toString();
+            final identifier = identifiers[0] as String;
             final parts = identifier.split('/');
-            final trackId = parts[parts.length - 1].toString();
+            final trackId = parts[parts.length - 1];
             final String titleVal = "${track['title']}";
             final String title = (titleVal != "null" && titleVal.isNotEmpty)
                 ? titleVal

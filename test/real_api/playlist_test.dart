@@ -59,16 +59,16 @@ void main() async {
       }
     }
 
+    /// TEST AGGIORNATO: Ora riceve direttamente l'oggetto Playlist? tipizzato!
     Future<void> testGetPlaylist(IMetadataPlugin plugin) async {
-      final data = await plugin.playlist.getPlaylist(testPlaylistId);
+      final playlist = await plugin.playlist.getPlaylist(testPlaylistId);
 
-      expect(data, isNotEmpty);
-      expect(data['playlist'], isNotNull);
-
-      final playlist = data['playlist'] as Map;
-      expect(playlist['title'], equals("TestPlaylist"));
-      expect(playlist['creator'], equals("Danfreemanold90"));
-      expect(playlist['identifier'], contains(testPlaylistId));
+      expect(playlist, isNotNull);
+      expect(playlist, isA<Playlist>());
+      expect(playlist.name, equals("TestPlaylist"));
+      expect(playlist.owner.name, equals("Danfreemanold90"));
+      expect(playlist.externalUri, contains(testPlaylistId));
+      expect(playlist.images, isNotNull);
     }
 
     Future<void> testPlaylistTracks(IMetadataPlugin plugin) async {
@@ -197,6 +197,7 @@ void main() async {
       expect(() => plugin.playlist.getPlaylist(playlist.id), throwsException);
     }
 
+    /// TEST AGGIORNATO: Verifica l'aggiornamento leggendo direttamente le proprietà del modello
     Future<void> testPlaylistUpdateAndSave(IMetadataPlugin plugin) async {
       final String tempName = "Spotube Temp Edit";
       final String updatedName = "Spotube Edited Playlist";
@@ -232,10 +233,10 @@ void main() async {
         public_: true,
       );
 
-      final updatedData = await plugin.playlist.getPlaylist(playlist.id);
-      final updatedPlaylist = updatedData['playlist'] as Map;
-      expect(updatedPlaylist['title'], equals(updatedName));
-      expect(updatedPlaylist['annotation'], equals(updatedDesc));
+      final updatedPlaylist = await plugin.playlist.getPlaylist(playlist.id);
+      expect(updatedPlaylist, isNotNull);
+      expect(updatedPlaylist!.name, equals(updatedName));
+      expect(updatedPlaylist.description, equals(updatedDesc));
 
       await plugin.playlist.save(playlist.id);
 
@@ -263,17 +264,15 @@ void main() async {
       expect(() => plugin.playlist.getPlaylist(playlist.id), throwsException);
     }
 
+    /// TEST AGGIORNATO: Verifica Radio Artista con il modello Playlist
     Future<void> testArtistRadioLifecycle(IMetadataPlugin plugin) async {
       const String artistRadioId = "radio:artist:The Beatles";
 
-      final data = await plugin.playlist.getPlaylist(artistRadioId);
-      expect(data, isNotEmpty);
-      expect(data['playlist'], isNotNull);
-
-      final playlist = data['playlist'] as Map;
-      expect(playlist['title'], equals("The Beatles Radio"));
-      expect(playlist['creator'], equals("listenbrainz"));
-      expect(playlist['identifier'], contains(artistRadioId));
+      final playlist = await plugin.playlist.getPlaylist(artistRadioId);
+      expect(playlist, isNotNull);
+      expect(playlist!.name, equals("The Beatles Radio"));
+      expect(playlist.owner.name, equals("listenbrainz"));
+      expect(playlist.externalUri, contains(artistRadioId));
 
       try {
         final tracksPage1 = await plugin.playlist.tracks(
@@ -316,17 +315,15 @@ void main() async {
       }
     }
 
+    /// TEST AGGIORNATO: Verifica Radio Mood con il modello Playlist
     Future<void> testMoodRadioLifecycle(IMetadataPlugin plugin) async {
       const String moodRadioId = "radio:tag:chill";
 
-      final data = await plugin.playlist.getPlaylist(moodRadioId);
-      expect(data, isNotEmpty);
-      expect(data['playlist'], isNotNull);
-
-      final playlist = data['playlist'] as Map;
-      expect(playlist['title'], equals("Chill Mood"));
-      expect(playlist['creator'], equals("listenbrainz"));
-      expect(playlist['identifier'], contains(moodRadioId));
+      final playlist = await plugin.playlist.getPlaylist(moodRadioId);
+      expect(playlist, isNotNull);
+      expect(playlist!.name, equals("Chill Mood"));
+      expect(playlist.owner.name, equals("listenbrainz"));
+      expect(playlist.externalUri, contains(moodRadioId));
 
       try {
         final tracksPage1 = await plugin.playlist.tracks(
