@@ -15,7 +15,9 @@ void main() async {
     late IMetadataPlugin evalPlugin;
     late IUIService mockUi;
 
-    const String testPlaylistId = "43a71768-4151-474a-b0e0-a5342a8c7692";
+    const String testUserPlaylistId = "43a71768-4151-474a-b0e0-a5342a8c7692";
+    const String testExplorationPlaylistId =
+        "ae83c260-3010-45ad-ba6d-2060ba04c254";
 
     setUpAll(() async {
       mockUi = MockUiService();
@@ -59,21 +61,89 @@ void main() async {
       }
     }
 
-    /// TEST AGGIORNATO: Ora riceve direttamente l'oggetto Playlist? tipizzato!
-    Future<void> testGetPlaylist(IMetadataPlugin plugin) async {
-      final playlist = await plugin.playlist.getPlaylist(testPlaylistId);
+    Future<void> testGetUserPlaylist(IMetadataPlugin plugin) async {
+      final playlist = await plugin.playlist.getPlaylist(testUserPlaylistId);
 
       expect(playlist, isNotNull);
       expect(playlist, isA<Playlist>());
+      expect(playlist.id, equals(testUserPlaylistId));
       expect(playlist.name, equals("TestPlaylist"));
+      expect(playlist.description, isEmpty);
+      expect(playlist.isPublic, isTrue);
+      expect(
+        playlist.externalUri,
+        equals("https://listenbrainz.org/playlist/$testUserPlaylistId"),
+      );
+
+      // Verifiche Owner
+      expect(playlist.owner.id, equals("Danfreemanold90"));
       expect(playlist.owner.name, equals("Danfreemanold90"));
-      expect(playlist.externalUri, contains(testPlaylistId));
-      expect(playlist.images, isNotNull);
+      expect(
+        playlist.owner.externalUri,
+        equals("https://listenbrainz.org/user/Danfreemanold90"),
+      );
+
+      // Verifiche Copertine estratte dai brani
+      expect(playlist.images, isNotEmpty);
+      expect(playlist.images.length, equals(3));
+      expect(
+        playlist.images[0].url,
+        equals(
+          "https://coverartarchive.org/release/9fa1a967-0610-4e10-988c-7e01bf176875/front-250.jpg",
+        ),
+      );
+      expect(playlist.images[0].width, equals(250));
+      expect(playlist.images[0].height, equals(250));
+    }
+
+    Future<void> testGetExplorationPlaylist(IMetadataPlugin plugin) async {
+      final playlist = await plugin.playlist.getPlaylist(
+        testExplorationPlaylistId,
+      );
+
+      expect(playlist, isNotNull);
+      expect(playlist, isA<Playlist>());
+      expect(playlist.id, equals(testExplorationPlaylistId));
+      expect(
+        playlist.name,
+        equals("Weekly Exploration for listenbrainz, week of 2023-11-20 Mon"),
+      );
+      expect(
+        playlist.description,
+        contains("The ListenBrainz Weekly Exploration aims to be a playlist"),
+      );
+      expect(playlist.isPublic, isTrue);
+      expect(
+        playlist.externalUri,
+        equals("https://listenbrainz.org/playlist/$testExplorationPlaylistId"),
+      );
+
+      expect(playlist.owner.id, equals("listenbrainz"));
+      expect(playlist.owner.name, equals("listenbrainz"));
+      expect(
+        playlist.owner.externalUri,
+        equals("https://listenbrainz.org/user/listenbrainz"),
+      );
+
+      expect(playlist.images, isNotEmpty);
+      expect(playlist.images.length, equals(4));
+      expect(
+        playlist.images[0].url,
+        equals(
+          "https://coverartarchive.org/release/884b4d12-3362-42cc-a5b2-c02c1d4e857b/front-250.jpg",
+        ),
+      );
+      expect(
+        playlist.images[1].url,
+        equals(
+          "https://coverartarchive.org/release/ae316897-722d-4f4c-a161-09651518186d/front-250.jpg",
+        ),
+      );
     }
 
     Future<void> testPlaylistTracks(IMetadataPlugin plugin) async {
       final tracks = await plugin.playlist.tracks(
-        testPlaylistId,
+        testUserPlaylistId,
         offset: 0,
         limit: 5,
       );
@@ -197,7 +267,6 @@ void main() async {
       expect(() => plugin.playlist.getPlaylist(playlist.id), throwsException);
     }
 
-    /// TEST AGGIORNATO: Verifica l'aggiornamento leggendo direttamente le proprietà del modello
     Future<void> testPlaylistUpdateAndSave(IMetadataPlugin plugin) async {
       final String tempName = "Spotube Temp Edit";
       final String updatedName = "Spotube Edited Playlist";
@@ -235,7 +304,7 @@ void main() async {
 
       final updatedPlaylist = await plugin.playlist.getPlaylist(playlist.id);
       expect(updatedPlaylist, isNotNull);
-      expect(updatedPlaylist!.name, equals(updatedName));
+      expect(updatedPlaylist.name, equals(updatedName));
       expect(updatedPlaylist.description, equals(updatedDesc));
 
       await plugin.playlist.save(playlist.id);
@@ -264,13 +333,12 @@ void main() async {
       expect(() => plugin.playlist.getPlaylist(playlist.id), throwsException);
     }
 
-    /// TEST AGGIORNATO: Verifica Radio Artista con il modello Playlist
     Future<void> testArtistRadioLifecycle(IMetadataPlugin plugin) async {
       const String artistRadioId = "radio:artist:The Beatles";
 
       final playlist = await plugin.playlist.getPlaylist(artistRadioId);
       expect(playlist, isNotNull);
-      expect(playlist!.name, equals("The Beatles Radio"));
+      expect(playlist.name, equals("The Beatles Radio"));
       expect(playlist.owner.name, equals("listenbrainz"));
       expect(playlist.externalUri, contains(artistRadioId));
 
@@ -315,13 +383,12 @@ void main() async {
       }
     }
 
-    /// TEST AGGIORNATO: Verifica Radio Mood con il modello Playlist
     Future<void> testMoodRadioLifecycle(IMetadataPlugin plugin) async {
       const String moodRadioId = "radio:tag:chill";
 
       final playlist = await plugin.playlist.getPlaylist(moodRadioId);
       expect(playlist, isNotNull);
-      expect(playlist!.name, equals("Chill Mood"));
+      expect(playlist.name, equals("Chill Mood"));
       expect(playlist.owner.name, equals("listenbrainz"));
       expect(playlist.externalUri, contains(moodRadioId));
 
@@ -367,7 +434,14 @@ void main() async {
     }
 
     group("Native tests", () {
-      test('Test getPlaylist', () async => await testGetPlaylist(nativePlugin));
+      test(
+        'Test getPlaylist (User Playlist)',
+        () async => await testGetUserPlaylist(nativePlugin),
+      );
+      test(
+        'Test getPlaylist (ListenBrainz Exploration Playlist)',
+        () async => await testGetExplorationPlaylist(nativePlugin),
+      );
       test(
         'Test tracks pagination',
         () async => await testPlaylistTracks(nativePlugin),
@@ -395,7 +469,14 @@ void main() async {
     });
 
     group("Eval tests", () {
-      test('Test getPlaylist', () async => await testGetPlaylist(evalPlugin));
+      test(
+        'Test getPlaylist (User Playlist)',
+        () async => await testGetUserPlaylist(evalPlugin),
+      );
+      test(
+        'Test getPlaylist (ListenBrainz Exploration Playlist)',
+        () async => await testGetExplorationPlaylist(evalPlugin),
+      );
       test(
         'Test tracks pagination',
         () async => await testPlaylistTracks(evalPlugin),

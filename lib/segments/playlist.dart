@@ -140,30 +140,41 @@ class MusicbrainzPlaylist extends IPlaylist {
       throw Exception("Playlist not found: $id");
     }
     final playlistMap = rawPlaylist as Map;
-    final titleVal = playlistMap['title'];
-    final String title = titleVal != null
-        ? titleVal.toString()
-        : "Untitled Playlist";
-    final descVal = playlistMap['annotation'];
-    final String desc = descVal != null ? descVal.toString() : "";
-    final creatorVal = playlistMap['creator'];
-    final String creator = creatorVal != null
-        ? creatorVal.toString()
-        : "Unknown";
-    var isPublic = false;
+
+    String title = "Untitled Playlist";
+    if (playlistMap.containsKey('title') && playlistMap['title'] != null) {
+      title = playlistMap['title'] as String;
+    }
+
+    String desc = "";
+    if (playlistMap.containsKey('annotation') &&
+        playlistMap['annotation'] != null) {
+      desc = playlistMap['annotation'] as String;
+    }
+
+    String creator = "Unknown";
+    if (playlistMap.containsKey('creator') && playlistMap['creator'] != null) {
+      creator = playlistMap['creator'] as String;
+    }
+
+    bool isPublic = false;
     final ext = playlistMap['extension'];
-    if (ext != null && ext is Map) {
+    if (ext != null) {
       final mbExt = ext['https://musicbrainz.org/doc/jspf#playlist'];
-      if (mbExt != null && mbExt is Map) {
+      if (mbExt != null) {
         final publicVal = mbExt['public'];
-        isPublic = publicVal is bool ? publicVal : false;
+        if (publicVal != null) {
+          isPublic = publicVal == true || publicVal.toString() == 'true';
+        }
       }
     }
+
     final List<Image> playlistImages = [];
     final tracks = playlistMap['track'];
-    if (tracks != null && tracks is List) {
-      for (final trackObj in tracks) {
-        if (trackObj != null) {
+    if (tracks != null) {
+      final tracksList = List.from(tracks);
+      for (final trackObj in tracksList) {
+        if (trackObj != null && playlistImages.length < 4) {
           final albumMbid = _extractAlbumMbid(trackObj);
           if (albumMbid.isNotEmpty) {
             playlistImages.add(
@@ -176,18 +187,21 @@ class MusicbrainzPlaylist extends IPlaylist {
             );
           }
         }
-        if (playlistImages.length >= 4) break;
       }
     }
+
+    final String creatorUri = "https://listenbrainz.org/user/$creator";
+    final String playlistUri = "https://listenbrainz.org/playlist/$id";
+
     return Playlist(
       id: id,
       name: title,
       description: desc,
-      externalUri: "https://listenbrainz.org/playlist/$id",
+      externalUri: playlistUri,
       owner: User(
         id: creator,
         name: creator,
-        externalUri: "https://listenbrainz.org/user/$creator",
+        externalUri: creatorUri,
         images: [],
       ),
       images: playlistImages,
@@ -452,7 +466,9 @@ class MusicbrainzPlaylist extends IPlaylist {
         final mbExt = ext['https://musicbrainz.org/doc/jspf#playlist'];
         if (mbExt != null) {
           final publicVal = mbExt['public'];
-          isPublicVal = publicVal is bool ? publicVal : false;
+          if (publicVal != null) {
+            isPublicVal = publicVal == true || publicVal.toString() == 'true';
+          }
         }
       }
     }
