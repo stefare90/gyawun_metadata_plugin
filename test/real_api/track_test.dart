@@ -1,4 +1,3 @@
-import 'package:dart_eval/dart_eval_bridge.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/iui_service.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
