@@ -112,9 +112,11 @@ class MusicbrainzAlbum extends IAlbum {
         ),
       );
     }
+    final int totalRecordings =
+        (tracksData['recording-count'] as int?) ?? tracks.length;
     return PaginatedResult<Track>(
       items: tracks,
-      total: tracks.length,
+      total: totalRecordings,
       offset: offset,
       limit: limit,
     );
