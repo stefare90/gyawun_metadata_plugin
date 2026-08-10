@@ -85,11 +85,7 @@ void main() async {
         expect(tracks[0].artists, isNotEmpty);
         expect(tracks[0].album.name, isNotEmpty);
       } catch (e) {
-        final String errorMsg = e is $Value
-            ? e.$value.toString()
-            : e.toString();
-
-        if (errorMsg.contains("LB Radio currently disabled")) {
+        if (e.toString().contains("LB Radio currently disabled")) {
           print(
             "⚠️ Warning: Skipping testRadio because ListenBrainz Radio is currently disabled due to high server load.",
           );

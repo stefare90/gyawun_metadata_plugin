@@ -369,11 +369,7 @@ void main() async {
           expect(trackFromPage2.id, equals(trackFromPage1.id));
         }
       } catch (e) {
-        final String errorMsg = e is $Value
-            ? e.$value.toString()
-            : e.toString();
-
-        if (errorMsg.contains("LB Radio currently disabled")) {
+        if (e.toString().contains("LB Radio currently disabled")) {
           print(
             "⚠️ Warning: Skipping testArtistRadioLifecycle tracks fetch because ListenBrainz Radio is currently disabled due to high server load.",
           );
@@ -419,11 +415,7 @@ void main() async {
           expect(trackFromPage2.id, equals(trackFromPage1.id));
         }
       } catch (e) {
-        final String errorMsg = e is $Value
-            ? e.$value.toString()
-            : e.toString();
-
-        if (errorMsg.contains("LB Radio currently disabled")) {
+        if (e.toString().contains("LB Radio currently disabled")) {
           print(
             "⚠️ Warning: Skipping testMoodRadioLifecycle tracks fetch because ListenBrainz Radio is currently disabled due to high server load.",
           );
