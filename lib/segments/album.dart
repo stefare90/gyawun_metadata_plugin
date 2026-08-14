@@ -105,7 +105,7 @@ class MusicbrainzAlbum extends IAlbum {
         Track(
           id: t['id'] as String,
           name: t['title'] as String,
-          durationMs: (t['length'] as int?) ?? 0,
+          durationMs: t['length'] ?? 0,
           externalUri: "${MusicbrainzPlugin.mbUriBase}recording/${t['id']}",
           album: album,
           artists: artists,

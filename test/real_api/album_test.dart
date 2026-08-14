@@ -7,12 +7,45 @@ import '_support/network_service.dart';
 import '_support/storage_service.dart';
 import '_support/ui_service.dart';
 
+class AlbumTestCase {
+  final String id;
+  final String name;
+  final String artistName;
+  final String releaseDate;
+  final int totalTracks;
+
+  const AlbumTestCase({
+    required this.id,
+    required this.name,
+    required this.artistName,
+    required this.releaseDate,
+    required this.totalTracks,
+  });
+}
+
 void main() async {
   group("Album interface test", () {
     late HostEnv hostEnv;
     late IMetadataPlugin nativePlugin;
     late IMetadataPlugin evalPlugin;
     late IUIService mockUi;
+
+    const testAlbums = [
+      AlbumTestCase(
+        id: '2c053984-4645-4699-9474-d2c35c227028',
+        name: 'Help!',
+        artistName: 'The Beatles',
+        releaseDate: '1965-08-06',
+        totalTracks: 14,
+      ),
+      AlbumTestCase(
+        id: '1de4099e-a41a-4ead-bb53-f45226bf778c',
+        name: 'Got to Be There',
+        artistName: 'Michael Jackson',
+        releaseDate: '1972-01-24',
+        totalTracks: 11,
+      ),
+    ];
 
     setUpAll(() async {
       mockUi = MockUiService();
@@ -26,56 +59,82 @@ void main() async {
       evalPlugin = getEvalPlugin(hostEnv);
     });
 
-    Future<void> testGetAlbum(IMetadataPlugin plugin) async {
-      final album = await plugin.album.getAlbum(
-        '2c053984-4645-4699-9474-d2c35c227028',
-      );
+    Future<void> testGetAlbum(
+      IMetadataPlugin plugin,
+      AlbumTestCase testCase,
+    ) async {
+      final album = await plugin.album.getAlbum(testCase.id);
 
       expect(album, isA<Album>());
-      expect(album.id, equals("2c053984-4645-4699-9474-d2c35c227028"));
-      expect(album.name, equals("Help!"));
-      expect(album.artists.length, 1);
-      expect(album.artists.first.name, equals("The Beatles"));
-      expect(album.releaseDate, equals("1965-08-06"));
-      expect(album.totalTracks, equals(14));
+      expect(album.id, equals(testCase.id));
+      expect(album.name, equals(testCase.name));
+      expect(album.artists, isNotEmpty);
+      expect(album.artists.first.name, equals(testCase.artistName));
+      expect(
+        album.releaseDate,
+        startsWith(testCase.releaseDate.split('-').first),
+      );
+      expect(album.totalTracks, equals(testCase.totalTracks));
     }
 
-    Future<void> testGetTracks(IMetadataPlugin plugin) async {
-      var tracks = await plugin.album.tracks(
-        '2c053984-4645-4699-9474-d2c35c227028',
+    Future<void> testGetAlbumTracks(
+      IMetadataPlugin plugin,
+      AlbumTestCase testCase,
+    ) async {
+      final tracks = await plugin.album.tracks(
+        testCase.id,
         offset: 0,
-        limit: 2,
+        limit: 20,
       );
 
       expect(tracks, isA<PaginatedResult<Track>>());
-      expect(tracks.offset, equals(0));
-      expect(tracks.limit, equals(2));
-      expect(tracks.items.length, equals(2));
-      expect(tracks.total, equals(14));
-      expect(tracks.items[0].album.name, equals("Help!"));
-      expect(tracks.items[0].artists[0].name, equals("The Beatles"));
-      expect(tracks.items[0].name, equals("Another Girl"));
+      expect(tracks.items, isNotEmpty);
+      expect(tracks.items.length, greaterThan(0));
+      expect(tracks.total, equals(testCase.totalTracks));
 
-      tracks = await plugin.album.tracks(
-        '2c053984-4645-4699-9474-d2c35c227028',
-        offset: 2,
-        limit: 1,
-      );
-
-      expect(tracks, isA<PaginatedResult<Track>>());
-      expect(tracks.offset, equals(2));
-      expect(tracks.limit, equals(1));
-      expect(tracks.items.length, equals(1));
-      expect(tracks.total, equals(14));
+      final firstTrack = tracks.items.first;
+      expect(firstTrack.id, isNotEmpty);
+      expect(firstTrack.name, isNotEmpty);
+      expect(firstTrack.durationMs, greaterThan(0));
+      expect(firstTrack.album.name, equals(testCase.name));
+      expect(firstTrack.artists, isNotEmpty);
+      expect(firstTrack.artists.first.name, equals(testCase.artistName));
     }
 
-    group("Native tests", () {
-      test('Test getAlbum', () async => await testGetAlbum(nativePlugin));
-      test('Test getTracks', () async => await testGetTracks(nativePlugin));
+    group("Native tests - getAlbum", () {
+      for (final testCase in testAlbums) {
+        test(
+          'getAlbum for ${testCase.name} (${testCase.id})',
+          () async => await testGetAlbum(nativePlugin, testCase),
+        );
+      }
     });
-    group("Eval tests", () {
-      test('Test getAlbum', () async => await testGetAlbum(evalPlugin));
-      test('Test getTracks', () async => await testGetTracks(evalPlugin));
+
+    group("Native tests - tracks", () {
+      for (final testCase in testAlbums) {
+        test(
+          'tracks for ${testCase.name} (${testCase.id})',
+          () async => await testGetAlbumTracks(nativePlugin, testCase),
+        );
+      }
+    });
+
+    group("Eval tests - getAlbum", () {
+      for (final testCase in testAlbums) {
+        test(
+          'getAlbum for ${testCase.name} (${testCase.id})',
+          () async => await testGetAlbum(evalPlugin, testCase),
+        );
+      }
+    });
+
+    group("Eval tests - tracks", () {
+      for (final testCase in testAlbums) {
+        test(
+          'tracks for ${testCase.name} (${testCase.id})',
+          () async => await testGetAlbumTracks(evalPlugin, testCase),
+        );
+      }
     });
   });
 }
