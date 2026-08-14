@@ -329,14 +329,10 @@ class MusicbrainzArtist extends IArtist {
     uniqueTracksRaw.sort((a, b) {
       final ratingA = a['rating'];
       final ratingB = b['rating'];
-      final votesA = ratingA != null
-          ? (ratingA['votes-count'] as num? ?? 0)
-          : 0.0;
-      final votesB = ratingB != null
-          ? (ratingB['votes-count'] as num? ?? 0)
-          : 0.0;
-      final valA = ratingA != null ? (ratingA['value'] as num? ?? 0.0) : 0.0;
-      final valB = ratingB != null ? (ratingB['value'] as num? ?? 0.0) : 0.0;
+      final votesA = ratingA != null ? (ratingA['votes-count'] ?? 0) : 0.0;
+      final votesB = ratingB != null ? (ratingB['votes-count'] ?? 0) : 0.0;
+      final valA = ratingA != null ? (ratingA['value'] ?? 0.0) : 0.0;
+      final valB = ratingB != null ? (ratingB['value'] ?? 0.0) : 0.0;
       final aAvg = votesA > 0.0 ? valA / votesA : 0.0;
       final bAvg = votesB > 0.0 ? valB / votesB : 0.0;
       return bAvg.compareTo(aAvg);

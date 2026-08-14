@@ -68,6 +68,7 @@ Implement the interfaces provided by the SDK.
    - Do **NOT** perform nullable type casts like `as Map?` on dynamic JSON objects.
    - Use standard `for-in` loops with explicit list typing before iteration.
    - Always `extend` rather than `implement` SDK Bridge classes.
+   - **Explicit `Map` Casting**: Always cast dynamic JSON objects to `Map` (`final Map map = dynamicObj as Map;`) before invoking `Map` methods (e.g. `.containsKey()`) to prevent internal `$Map` wrapper failures in `dart_eval`.
 
 ---
 
