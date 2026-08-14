@@ -16,7 +16,7 @@ class MusicbrainzTrack extends ITrack {
   static Track buildTrack(Map recording) {
     final String id = recording['id'] as String;
     final String name = recording['title'] as String;
-    final int durationMs = (recording['length'] as int?) ?? 0;
+    final int durationMs = recording['length'] ?? 0;
 
     final List<Artist> artists = [];
     final credits = recording['artist-credit'];

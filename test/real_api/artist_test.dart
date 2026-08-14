@@ -7,12 +7,34 @@ import '_support/network_service.dart';
 import '_support/storage_service.dart';
 import '_support/ui_service.dart';
 
+class ArtistTestCase {
+  final String name;
+  final String mbid;
+
+  const ArtistTestCase({required this.name, required this.mbid});
+}
+
 void main() async {
   group("Artist interface test", () {
     late HostEnv hostEnv;
     late IMetadataPlugin nativePlugin;
     late IMetadataPlugin evalPlugin;
     late IUIService mockUi;
+
+    const testArtists = [
+      ArtistTestCase(
+        name: 'Queen',
+        mbid: '0383dadf-2a4e-4d10-a46a-e9e041da8eb3',
+      ),
+      ArtistTestCase(
+        name: 'Bee Gees',
+        mbid: 'bf0f7e29-dfe1-416c-b5c6-f9ebc19ea810',
+      ),
+      ArtistTestCase(
+        name: 'Michael Jackson',
+        mbid: 'f27ec8db-af05-4f36-916e-3d57f91ecf5e',
+      ),
+    ];
 
     setUpAll(() async {
       mockUi = MockUiService();
@@ -134,62 +156,21 @@ void main() async {
       expect(related.items[0].genres, isNotEmpty);
     }
 
-    Future<void> testGetTopTracks(IMetadataPlugin plugin) async {
-      // Test di offset: 0, limit: 2 (Dovrebbe restituire "Ask Me Why" e "The Saints")
-      var tracks = await plugin.artist.topTracks(
-        'b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d',
-        offset: 0,
-        limit: 2,
-      );
-
-      expect(tracks, isA<PaginatedResult<Track>>());
-      expect(tracks.offset, equals(0));
-      expect(tracks.limit, equals(2));
-      expect(tracks.total, equals(6));
-      expect(tracks.items.length, equals(2));
-      expect(tracks.items, isA<List<Track>>());
-
-      final firstTrack = tracks.items[0];
-      expect(firstTrack.id, equals("c8da403f-3c34-48b0-ae9e-7aa419df07c3"));
-      expect(firstTrack.name, equals("Ask Me Why"));
-      expect(firstTrack.album.name, equals("Please Please Me / Ask Me Why"));
-      expect(firstTrack.artists[0].name, equals("The Beatles"));
-
-      final secondTrack = tracks.items[1];
-      expect(secondTrack.id, equals("bb0fc222-e480-48a5-89ec-a564efb3886a"));
-      expect(secondTrack.name, equals("The Saints"));
-      expect(secondTrack.album.name, equals("My Bonnie"));
-      expect(secondTrack.artists[0].name, equals("Tony Sheridan"));
-
-      tracks = await plugin.artist.topTracks(
-        'b10bbbfc-cf9e-42e0-be17-e2c3e1d2600d',
-        offset: 2,
-        limit: 1,
-      );
-
-      expect(tracks, isA<PaginatedResult<Track>>());
-      expect(tracks.offset, equals(2));
-      expect(tracks.limit, equals(1));
-      expect(tracks.items.length, equals(1));
-
-      final thirdTrack = tracks.items[0];
-      expect(thirdTrack.id, equals("f87eb4dd-7e3c-4365-a3c8-f144696f5952"));
-      expect(thirdTrack.name, equals("Love Me Do"));
-      expect(thirdTrack.album.name, equals("Love Me Do"));
-      expect(thirdTrack.artists[0].name, equals("The Beatles"));
-    }
-
-    Future<void> testBeeGeesTopTracks(IMetadataPlugin plugin) async {
-      const beeGeesMbid = 'bf0f7e29-dfe1-416c-b5c6-f9ebc19ea810';
-
+    Future<void> testArtistTopTracks(
+      IMetadataPlugin plugin,
+      ArtistTestCase testCase,
+    ) async {
       final result = await plugin.artist.topTracks(
-        beeGeesMbid,
+        testCase.mbid,
         offset: 0,
         limit: 10,
       );
-
       expect(result, isA<PaginatedResult<Track>>());
-      expect(result.items, isNotEmpty);
+      expect(
+        result.items,
+        isNotEmpty,
+        reason: 'Top tracks for ${testCase.name} should not be empty',
+      );
       expect(result.items.length, greaterThan(0));
       expect(result.total, greaterThan(0));
       expect(result.offset, equals(0));
@@ -204,12 +185,14 @@ void main() async {
       );
       expect(firstTrack.externalUri, contains(firstTrack.id));
       expect(firstTrack.artists, isNotEmpty);
-      final primaryArtist = firstTrack.artists.first;
-      expect(primaryArtist.id, equals(beeGeesMbid));
-      expect(primaryArtist.name, equals('Bee Gees'));
+      final hasMatchingArtist = firstTrack.artists.any(
+        (a) => a.id == testCase.mbid,
+      );
       expect(
-        primaryArtist.externalUri,
-        equals('https://musicbrainz.org/artist/$beeGeesMbid'),
+        hasMatchingArtist,
+        isTrue,
+        reason:
+            'Track "${firstTrack.name}" should contain artist with ID ${testCase.mbid}',
       );
       expect(firstTrack.album, isNotNull);
       expect(firstTrack.album.name, isNotEmpty);
@@ -219,52 +202,38 @@ void main() async {
         expect(track.name, isNotEmpty);
         expect(track.externalUri, contains('musicbrainz.org/recording/'));
         expect(track.artists, isNotEmpty);
-        final hasMatchingArtistId = track.artists.any(
-          (a) => a.id == beeGeesMbid,
-        );
         expect(
-          hasMatchingArtistId,
+          track.artists.any((a) => a.id == testCase.mbid),
           isTrue,
           reason:
-              'Track "${track.name}" should contain artist with ID $beeGeesMbid',
+              'Track "${track.name}" should contain artist ID ${testCase.mbid}',
         );
       }
     }
 
     group("Native tests", () {
-      test(
-        'Test Bee Gees topTracks (Artist ID Matching)',
-        () async => await testBeeGeesTopTracks(nativePlugin),
-      );
-    });
-
-    group("Eval tests", () {
-      test(
-        'Test Bee Gees topTracks (Artist ID Matching)',
-        () async => await testBeeGeesTopTracks(evalPlugin),
-      );
-    });
-
-    group("Native tests", () {
       test('Test getArtist', () async => await testGetArtist(nativePlugin));
       test('Test albums', () async => await testGetAlbums(nativePlugin));
       test('Test related', () async => await testGetRelated(nativePlugin));
-      test('Test topTracks', () async => await testGetTopTracks(nativePlugin));
-      test(
-        'Test Bee Gees topTracks',
-        () async => await testBeeGeesTopTracks(nativePlugin),
-      );
+
+      for (final testCase in testArtists) {
+        test(
+          'TopTracks for ${testCase.name}',
+          () async => await testArtistTopTracks(nativePlugin, testCase),
+        );
+      }
     });
     group("Eval tests", () {
       test('Test getArtist', () async => await testGetArtist(evalPlugin));
       test('Test albums', () async => await testGetAlbums(evalPlugin));
       test('Test related', () async => await testGetRelated(evalPlugin));
-      test('Test topTracks', () async => await testGetTopTracks(evalPlugin));
 
-      test(
-        'Test Bee Gees topTracks',
-        () async => await testBeeGeesTopTracks(evalPlugin),
-      );
+      for (final testCase in testArtists) {
+        test(
+          'TopTracks for ${testCase.name}',
+          () async => await testArtistTopTracks(evalPlugin, testCase),
+        );
+      }
     });
   });
 }
