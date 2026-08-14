@@ -160,6 +160,7 @@ void main() async {
 
       final firstTrack = tracks.items.first;
       expect(firstTrack.name, equals("Loro"));
+      expect(firstTrack.durationMs, greaterThan(0));
 
       expect(firstTrack.artists, isNotEmpty);
       expect(firstTrack.artists.first.name, equals("Marracash"));

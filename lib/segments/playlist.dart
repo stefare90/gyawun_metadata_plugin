@@ -19,6 +19,38 @@ class MusicbrainzPlaylist extends IPlaylist {
 
   MusicbrainzPlaylist(this._host, this._user);
 
+  int _extractTrackDurationMs(dynamic trackObj) {
+    if (trackObj == null || trackObj is! Map) return 0;
+    final Map trackMap = trackObj;
+    if (trackMap.containsKey('duration') && trackMap['duration'] != null) {
+      final dur = trackMap['duration'];
+      final parsed = int.tryParse(dur.toString());
+      if (parsed != null && parsed > 0) return parsed;
+    }
+    if (trackMap.containsKey('length') && trackMap['length'] != null) {
+      final len = trackMap['length'];
+      final parsed = int.tryParse(len.toString());
+      if (parsed != null && parsed > 0) return parsed;
+    }
+    final ext = trackMap['extension'];
+    if (ext != null && ext is Map) {
+      final mbExt = ext['https://musicbrainz.org/doc/jspf#track'];
+      if (mbExt != null && mbExt is Map) {
+        if (mbExt.containsKey('duration_ms') && mbExt['duration_ms'] != null) {
+          final dur = mbExt['duration_ms'];
+          final parsed = int.tryParse(dur.toString());
+          if (parsed != null && parsed > 0) return parsed;
+        }
+        if (mbExt.containsKey('length') && mbExt['length'] != null) {
+          final len = mbExt['length'];
+          final parsed = int.tryParse(len.toString());
+          if (parsed != null && parsed > 0) return parsed;
+        }
+      }
+    }
+    return 0;
+  }
+
   List<Artist> _extractTrackArtists(dynamic trackObj) {
     final List<Artist> artists = [];
     final creatorVal = trackObj['creator'];
@@ -93,7 +125,7 @@ class MusicbrainzPlaylist extends IPlaylist {
       final imageVal = trackObj['image'];
       final s = imageVal.toString();
       if (s != "null" && s != "") {
-        images.add(Image(url: s, width: 250, height: 250));
+        images.add(Image(url: s, width: 500, height: 500));
         return images;
       }
     }
@@ -110,6 +142,14 @@ class MusicbrainzPlaylist extends IPlaylist {
           url: "https://coverartarchive.org/release/$releaseMbid/front-500.jpg",
           width: 500,
           height: 500,
+        ),
+      );
+      images.add(
+        Image(
+          url:
+              "https://coverartarchive.org/release/$releaseMbid/front-1200.jpg",
+          width: 1200,
+          height: 1200,
         ),
       );
     }
@@ -244,6 +284,7 @@ class MusicbrainzPlaylist extends IPlaylist {
             final artists = _extractTrackArtists(track);
             final albumMbid = _extractAlbumMbid(track);
             final albumImages = _extractTrackImages(track, albumMbid);
+            final durationMs = _extractTrackDurationMs(track);
             final releaseUri = (albumMbid.isNotEmpty && albumMbid != "null")
                 ? "${MusicbrainzPlugin.mbUriBase}release/$albumMbid"
                 : "";
@@ -261,7 +302,7 @@ class MusicbrainzPlaylist extends IPlaylist {
               Track(
                 id: trackId,
                 name: title,
-                durationMs: 0,
+                durationMs: durationMs,
                 externalUri: "${MusicbrainzPlugin.mbUriBase}recording/$trackId",
                 album: album,
                 artists: artists,
@@ -578,6 +619,7 @@ class MusicbrainzPlaylist extends IPlaylist {
             final artists = _extractTrackArtists(track);
             final albumMbid = _extractAlbumMbid(track);
             final albumImages = _extractTrackImages(track, albumMbid);
+            final durationMs = _extractTrackDurationMs(track);
             final String releaseUri =
                 (albumMbid.isNotEmpty && albumMbid != "null")
                 ? "${MusicbrainzPlugin.mbUriBase}release/$albumMbid"
@@ -596,7 +638,7 @@ class MusicbrainzPlaylist extends IPlaylist {
               Track(
                 id: trackId,
                 name: title,
-                durationMs: 0,
+                durationMs: durationMs,
                 externalUri: "${MusicbrainzPlugin.mbUriBase}recording/$trackId",
                 album: album,
                 artists: artists,
