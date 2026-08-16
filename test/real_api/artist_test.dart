@@ -115,7 +115,9 @@ void main() async {
       expect(albums.items[0].name, isNotEmpty);
       expect(
         albums.items[0].externalUri,
-        startsWith("https://musicbrainz.org/release/"),
+        startsWith(
+          "https://musicbrainz.org/release-group/",
+        ), // <-- Aggiornato a release-group/
       );
 
       albums = await plugin.artist.albums(
@@ -175,6 +177,7 @@ void main() async {
       expect(result.total, greaterThan(0));
       expect(result.offset, equals(0));
       expect(result.limit, equals(10));
+
       final firstTrack = result.items.first;
       expect(firstTrack.id, isNotEmpty);
       expect(firstTrack.name, isNotEmpty);
@@ -197,6 +200,7 @@ void main() async {
       expect(firstTrack.album, isNotNull);
       expect(firstTrack.album.name, isNotEmpty);
       expect(firstTrack.album.albumType, isA<AlbumType>());
+
       for (final track in result.items) {
         expect(track.id, isNotEmpty);
         expect(track.name, isNotEmpty);
@@ -211,6 +215,50 @@ void main() async {
       }
     }
 
+    Future<void> testArtistAlbumsContiguity(
+      IMetadataPlugin plugin,
+      ArtistTestCase testCase,
+    ) async {
+      final all6 = await plugin.artist.albums(
+        testCase.mbid,
+        offset: 0,
+        limit: 6,
+      );
+
+      final page1 = await plugin.artist.albums(
+        testCase.mbid,
+        offset: 0,
+        limit: 3,
+      );
+
+      final page2 = await plugin.artist.albums(
+        testCase.mbid,
+        offset: 3,
+        limit: 3,
+      );
+
+      final setAll6 = all6.items.map((a) => a.id).toSet();
+      final setPage1 = page1.items.map((a) => a.id).toSet();
+      final setPage2 = page2.items.map((a) => a.id).toSet();
+      final setCombinedPages = {...setPage1, ...setPage2};
+
+      // 1. Nessun album duplicato tra Pagina 1 e Pagina 2
+      expect(
+        setPage1.intersection(setPage2),
+        isEmpty,
+        reason:
+            'Page 1 and Page 2 should not contain duplicate albums for ${testCase.name}',
+      );
+
+      // 2. L'insieme delle due pagine combinate deve corrispondere alla chiamata da 6
+      expect(
+        setCombinedPages,
+        equals(setAll6),
+        reason:
+            'Paginated pages combined should contain the exact same albums as single query for ${testCase.name}',
+      );
+    }
+
     group("Native tests", () {
       test('Test getArtist', () async => await testGetArtist(nativePlugin));
       test('Test albums', () async => await testGetAlbums(nativePlugin));
@@ -221,8 +269,13 @@ void main() async {
           'TopTracks for ${testCase.name}',
           () async => await testArtistTopTracks(nativePlugin, testCase),
         );
+        test(
+          'Albums contiguity for ${testCase.name}',
+          () async => await testArtistAlbumsContiguity(nativePlugin, testCase),
+        );
       }
     });
+
     group("Eval tests", () {
       test('Test getArtist', () async => await testGetArtist(evalPlugin));
       test('Test albums', () async => await testGetAlbums(evalPlugin));
@@ -232,6 +285,10 @@ void main() async {
         test(
           'TopTracks for ${testCase.name}',
           () async => await testArtistTopTracks(evalPlugin, testCase),
+        );
+        test(
+          'Albums contiguity for ${testCase.name}',
+          () async => await testArtistAlbumsContiguity(evalPlugin, testCase),
         );
       }
     });

@@ -108,18 +108,18 @@ class MusicbrainzArtist extends IArtist {
   }) async {
     final data = await _host.fetchApi(
       baseUrl: MusicbrainzPlugin.mbUrl,
-      path: "release",
+      path: "release-group",
       query: {
         'artist': id,
         'type': 'album',
-        'status': 'official',
-        'limit': '100',
+        'limit': limit.toString(),
         'offset': offset.toString(),
-        'inc': 'artist-credits+release-groups',
+        'inc': 'artist-credits',
         'fmt': 'json',
       },
     );
-    if (data == null) {
+
+    if (data == null || data['release-groups'] == null) {
       return PaginatedResult<Album>(
         items: [],
         total: 0,
@@ -127,39 +127,33 @@ class MusicbrainzArtist extends IArtist {
         limit: limit,
       );
     }
-    final rawReleases = data['releases'];
-    final List<Album> uniqueAlbums = [];
-    final List<String> seenGroups = [];
-    for (final rObj in rawReleases) {
-      final Map r = rObj as Map;
-      final Map? group = r['release-group'] as Map?;
-      if (group != null) {
-        final String groupId = group['id'] as String;
-        bool alreadySeen = false;
-        for (final seenId in seenGroups) {
-          if (seenId == groupId) {
-            alreadySeen = true;
-          }
-        }
-        if (!alreadySeen) {
-          seenGroups.add(groupId);
-          uniqueAlbums.add(MusicbrainzAlbum.buildAlbum(r));
-        }
+
+    final rawGroups = data['release-groups'];
+    if (rawGroups is! List) {
+      return PaginatedResult<Album>(
+        items: [],
+        total: 0,
+        offset: offset,
+        limit: limit,
+      );
+    }
+
+    final List<Album> items = [];
+    for (final gObj in rawGroups) {
+      if (gObj != null && gObj is Map) {
+        items.add(MusicbrainzAlbum.buildAlbumFromReleaseGroup(gObj));
       }
     }
-    final List<Album> paged = [];
-    var totalUnique = uniqueAlbums.length;
-    int end = offset + limit;
-    if (end > totalUnique) {
-      end = totalUnique;
+
+    int totalCount = items.length;
+    final rawTotal = data['release-group-count'] ?? data['count'];
+    if (rawTotal != null && rawTotal is int) {
+      totalCount = rawTotal;
     }
-    for (var i = offset; i < end; i++) {
-      paged.add(uniqueAlbums[i]);
-    }
-    final int total = (data['release-count'] as int?) ?? totalUnique;
+
     return PaginatedResult<Album>(
-      items: paged,
-      total: total,
+      items: items,
+      total: totalCount,
       offset: offset,
       limit: limit,
     );

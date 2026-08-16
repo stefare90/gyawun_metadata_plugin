@@ -78,6 +78,76 @@ class MusicbrainzAlbum extends IAlbum {
     );
   }
 
+  static Album buildAlbumFromReleaseGroup(Map groupData) {
+    final String gId = groupData['id'] as String;
+    final String title = groupData['title'] as String;
+
+    final rawDate = groupData['first-release-date'];
+    final String releaseDate = rawDate != null ? rawDate.toString() : '';
+
+    final List<Artist> artists = [];
+    final credits = groupData['artist-credit'];
+    if (credits != null && credits is List) {
+      for (final cObj in credits) {
+        if (cObj != null && cObj is Map) {
+          final Map c = cObj;
+          final Map? a = c['artist'] as Map?;
+          if (a != null) {
+            final String aId = a['id'] as String;
+            artists.add(
+              Artist(
+                id: aId,
+                name: a['name'] as String,
+                externalUri: "${MusicbrainzPlugin.mbUriBase}artist/$aId",
+              ),
+            );
+          }
+        }
+      }
+    }
+
+    final rawPrimaryType = groupData['primary-type'];
+    final String primaryType = rawPrimaryType != null
+        ? rawPrimaryType.toString().toLowerCase()
+        : '';
+
+    var albumType = AlbumType.album;
+    if (primaryType == 'single') {
+      albumType = AlbumType.single;
+    } else if (primaryType == 'compilation') {
+      albumType = AlbumType.compilation;
+    }
+
+    final List<Image> images = [
+      Image(
+        url: "https://coverartarchive.org/release-group/$gId/front-250.jpg",
+        width: 250,
+        height: 250,
+      ),
+      Image(
+        url: "https://coverartarchive.org/release-group/$gId/front-500.jpg",
+        width: 500,
+        height: 500,
+      ),
+      Image(
+        url: "https://coverartarchive.org/release-group/$gId/front-1200.jpg",
+        width: 1200,
+        height: 1200,
+      ),
+    ];
+
+    return Album(
+      id: gId,
+      name: title,
+      artists: artists,
+      images: images,
+      releaseDate: releaseDate,
+      externalUri: "${MusicbrainzPlugin.mbUriBase}release-group/$gId",
+      totalTracks: 0,
+      albumType: albumType,
+    );
+  }
+
   PaginatedResult<Track> _buildTracks(
     Map tracksData,
     Album album,
