@@ -39,6 +39,13 @@ void main() async {
         totalTracks: 14,
       ),
       AlbumTestCase(
+        id: 'rg:5db85281-934d-36e5-865c-1922ad82a948',
+        name: 'Love Me Do / P.S. I Love You',
+        artistName: 'The Beatles',
+        releaseDate: '1962-10-05',
+        totalTracks: 2,
+      ),
+      AlbumTestCase(
         id: '1de4099e-a41a-4ead-bb53-f45226bf778c',
         name: 'Got to Be There',
         artistName: 'Michael Jackson',
@@ -66,7 +73,7 @@ void main() async {
       final album = await plugin.album.getAlbum(testCase.id);
 
       expect(album, isA<Album>());
-      expect(album.id, equals(testCase.id));
+      expect(album.id, startsWith('rg:'));
       expect(album.name, equals(testCase.name));
       expect(album.artists, isNotEmpty);
       expect(album.artists.first.name, equals(testCase.artistName));
@@ -97,20 +104,19 @@ void main() async {
       expect(firstTrack.name, isNotEmpty);
       expect(firstTrack.durationMs, greaterThan(0));
       expect(firstTrack.album.name, equals(testCase.name));
+      expect(firstTrack.album.id, startsWith('rg:'));
       expect(firstTrack.artists, isNotEmpty);
       expect(firstTrack.artists.first.name, equals(testCase.artistName));
     }
 
-    group("Native tests - getAlbum", () {
+    group("Native tests", () {
       for (final testCase in testAlbums) {
         test(
           'getAlbum for ${testCase.name} (${testCase.id})',
           () async => await testGetAlbum(nativePlugin, testCase),
         );
       }
-    });
 
-    group("Native tests - tracks", () {
       for (final testCase in testAlbums) {
         test(
           'tracks for ${testCase.name} (${testCase.id})',
@@ -119,16 +125,14 @@ void main() async {
       }
     });
 
-    group("Eval tests - getAlbum", () {
+    group("Eval tests", () {
       for (final testCase in testAlbums) {
         test(
           'getAlbum for ${testCase.name} (${testCase.id})',
           () async => await testGetAlbum(evalPlugin, testCase),
         );
       }
-    });
 
-    group("Eval tests - tracks", () {
       for (final testCase in testAlbums) {
         test(
           'tracks for ${testCase.name} (${testCase.id})',

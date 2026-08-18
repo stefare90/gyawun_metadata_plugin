@@ -115,9 +115,7 @@ void main() async {
       expect(albums.items[0].name, isNotEmpty);
       expect(
         albums.items[0].externalUri,
-        startsWith(
-          "https://musicbrainz.org/release-group/",
-        ), // <-- Aggiornato a release-group/
+        startsWith("https://musicbrainz.org/release-group/"),
       );
 
       albums = await plugin.artist.albums(
@@ -242,7 +240,6 @@ void main() async {
       final setPage2 = page2.items.map((a) => a.id).toSet();
       final setCombinedPages = {...setPage1, ...setPage2};
 
-      // 1. Nessun album duplicato tra Pagina 1 e Pagina 2
       expect(
         setPage1.intersection(setPage2),
         isEmpty,
@@ -250,7 +247,6 @@ void main() async {
             'Page 1 and Page 2 should not contain duplicate albums for ${testCase.name}',
       );
 
-      // 2. L'insieme delle due pagine combinate deve corrispondere alla chiamata da 6
       expect(
         setCombinedPages,
         equals(setAll6),

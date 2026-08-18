@@ -4,7 +4,9 @@ import 'package:gyawun_metadata_sdk/metadata/models/plugin_response.dart';
 import 'package:http/http.dart' as http;
 
 class NetworkService implements INetworkService {
-  NetworkService();
+  final int maxAttempts;
+
+  NetworkService({this.maxAttempts = 5});
 
   @override
   Future<PluginResponse> send(PluginRequest request) async {
@@ -12,26 +14,33 @@ class NetworkService implements INetworkService {
       ..addAll(request.headers);
 
     final uri = Uri.parse(request.url);
-    http.Response requestFuture;
+    http.Response? response;
 
-    await Future.delayed(
-      const Duration(milliseconds: 1000),
-    ); // avoid hitting rate limits
-    if (request.method.toUpperCase() == 'POST') {
-      requestFuture = await http.post(
-        uri,
-        headers: finalHeaders,
-        body: request.body,
+    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      if (request.method.toUpperCase() == 'POST') {
+        response = await http.post(
+          uri,
+          headers: finalHeaders,
+          body: request.body,
+        );
+      } else {
+        response = await http.get(uri, headers: finalHeaders);
+      }
+
+      if (response.statusCode != 503 || attempt == maxAttempts) {
+        break;
+      }
+
+      print(
+        '⚠️ HTTP 503 (Service Unavailable) for $uri. Retry $attempt of $maxAttempts...',
       );
-    } else {
-      requestFuture = await http.get(uri, headers: finalHeaders);
     }
 
-    final pluginResponse = PluginResponse(
-      statusCode: requestFuture.statusCode,
-      body: requestFuture.body,
+    return PluginResponse(
+      statusCode: response!.statusCode,
+      body: response.body,
     );
-
-    return pluginResponse;
   }
 }

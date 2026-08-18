@@ -65,8 +65,27 @@ class MusicbrainzAlbum extends IAlbum {
         }
       }
     }
+
+    String finalId = releaseData['id'] as String;
+    AlbumType albumType = AlbumType.album;
+    final rg = releaseData['release-group'];
+    if (rg != null && rg is Map) {
+      if (rg['id'] != null) {
+        finalId = "rg:${rg['id']}";
+      }
+      final rawPrimaryType = rg['primary-type'];
+      final String primaryType = rawPrimaryType != null
+          ? rawPrimaryType.toString().toLowerCase()
+          : '';
+      if (primaryType == 'single') {
+        albumType = AlbumType.single;
+      } else if (primaryType == 'compilation') {
+        albumType = AlbumType.compilation;
+      }
+    }
+
     return Album(
-      id: releaseData['id'] as String,
+      id: finalId,
       name: releaseData['title'] as String,
       artists: artists,
       images: images,
@@ -74,7 +93,7 @@ class MusicbrainzAlbum extends IAlbum {
       externalUri:
           "${MusicbrainzPlugin.mbUriBase}release/${releaseData['id'] as String}",
       totalTracks: trackCount,
-      albumType: AlbumType.album,
+      albumType: albumType,
     );
   }
 
@@ -137,7 +156,7 @@ class MusicbrainzAlbum extends IAlbum {
     ];
 
     return Album(
-      id: gId,
+      id: "rg:$gId",
       name: title,
       artists: artists,
       images: images,
@@ -192,13 +211,46 @@ class MusicbrainzAlbum extends IAlbum {
     );
   }
 
-  @override
-  Future<Album> getAlbum(String id) async {
-    final releaseData = await _host.fetchApi(
+  Future<String> _resolveReleaseId(String id) async {
+    if (id.startsWith('rg:')) {
+      final rgId = id.substring(3);
+      final data = await _host.fetchApi(
+        baseUrl: MusicbrainzPlugin.mbUrl,
+        path: "release",
+        query: {'release-group': rgId, 'limit': '1', 'fmt': 'json'},
+      );
+      final releases = data['releases'] as List?;
+      if (releases != null && releases.isNotEmpty) {
+        return releases.first['id'] as String;
+      }
+      throw Exception("No releases found for release group $rgId");
+    }
+    return id;
+  }
+
+  Future<String> _ensureReleaseGroupId(String id) async {
+    if (id.startsWith('rg:')) return id.substring(3);
+
+    final data = await _host.fetchApi(
       baseUrl: MusicbrainzPlugin.mbUrl,
       path: "release/$id",
+      query: {'inc': 'release-groups', 'fmt': 'json'},
+    );
+    final rg = data['release-group'];
+    if (rg != null && rg is Map && rg['id'] != null) {
+      return rg['id'] as String;
+    }
+    throw Exception("No release group found for release $id");
+  }
+
+  @override
+  Future<Album> getAlbum(String id) async {
+    final releaseId = await _resolveReleaseId(id);
+    final releaseData = await _host.fetchApi(
+      baseUrl: MusicbrainzPlugin.mbUrl,
+      path: "release/$releaseId",
       headers: {},
-      query: {'inc': 'artist-credits+recordings', 'fmt': 'json'},
+      query: {'inc': 'artist-credits+recordings+release-groups', 'fmt': 'json'},
     );
     return buildAlbum(releaseData);
   }
@@ -209,12 +261,19 @@ class MusicbrainzAlbum extends IAlbum {
     int offset = 0,
     int limit = 20,
   }) async {
-    final album = await getAlbum(id);
+    final releaseId = await _resolveReleaseId(id);
+    final releaseData = await _host.fetchApi(
+      baseUrl: MusicbrainzPlugin.mbUrl,
+      path: "release/$releaseId",
+      headers: {},
+      query: {'inc': 'artist-credits+recordings+release-groups', 'fmt': 'json'},
+    );
+    final album = buildAlbum(releaseData);
     final tracksData = await _host.fetchApi(
       baseUrl: MusicbrainzPlugin.mbUrl,
       path: "recording",
       query: {
-        'release': id,
+        'release': releaseId,
         'limit': limit.toString(),
         'offset': offset.toString(),
         'inc': 'artist-credits',
@@ -227,14 +286,16 @@ class MusicbrainzAlbum extends IAlbum {
   @override
   Future<void> save(List<String> ids) async {
     for (String id in ids) {
-      await user.saveAlbum(id: id);
+      final rgId = await _ensureReleaseGroupId(id);
+      await user.saveAlbum(id: rgId);
     }
   }
 
   @override
   Future<void> unsave(List<String> ids) async {
     for (String id in ids) {
-      await user.unsaveAlbum(id: id);
+      final rgId = await _ensureReleaseGroupId(id);
+      await user.unsaveAlbum(id: rgId);
     }
   }
 }

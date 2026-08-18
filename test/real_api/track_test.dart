@@ -65,7 +65,7 @@ void main() async {
         startsWith("https://musicbrainz.org/release/"),
       );
       expect(track.album.releaseDate, isNotEmpty);
-      expect(track.album.albumType, equals(AlbumType.album));
+      expect(track.album.albumType, equals(AlbumType.single));
 
       expect(track.album.artists, isNotEmpty);
       expect(track.album.artists[0].name, equals("The Beatles"));

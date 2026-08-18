@@ -61,7 +61,7 @@ void main() async {
     }
 
     Future<void> testAlbumLibrary(IMetadataPlugin plugin) async {
-      final String testAlbumId = "5db85281-934d-36e5-865c-1922ad82a948";
+      final String testAlbumId = "rg:5db85281-934d-36e5-865c-1922ad82a948";
 
       await plugin.album.save([testAlbumId]);
 

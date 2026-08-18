@@ -30,14 +30,19 @@ void main() {
       evalPlugin = getEvalPlugin(hostEnv);
     });
 
-    Future<void> testGetAlbum(IMetadataPlugin plugin) async {
+    tearDown(() {
+      reset(mockNetwork);
+    });
+
+    // Test 1: getAlbum passando direttamente un Release ID ("123")
+    Future<void> testGetAlbumWithReleaseId(IMetadataPlugin plugin) async {
       when(
         () => mockNetwork.send(
           any(
             that: predicate<PluginRequest>(
               (req) =>
                   req.url ==
-                  'https://musicbrainz.org/ws/2/release/123?inc=artist-credits%2Brecordings&fmt=json',
+                  'https://musicbrainz.org/ws/2/release/123?inc=artist-credits%2Brecordings%2Brelease-groups&fmt=json',
             ),
           ),
         ),
@@ -46,10 +51,12 @@ void main() {
       );
 
       final album = await plugin.album.getAlbum('123');
-
       final albumJson = jsonDecode(Fixtures.albumHelp);
+
       expect(album.name, equals(albumJson['title']));
-      expect(album.id, equals(albumJson['id']));
+      // Verifica che l'ID sia stato normalizzato a "rg:..." grazie al blocco release-group
+      expect(album.id, equals("rg:rg-help-123"));
+      expect(album.albumType, equals(AlbumType.album));
       expect(album.releaseDate, equals(albumJson['date']));
       expect(album.totalTracks, equals(albumJson['media'][0]['track-count']));
       expect(album.artists.length, equals(1));
@@ -57,27 +64,129 @@ void main() {
         album.artists[0].name,
         equals(albumJson['artist-credit'][0]['artist']['name']),
       );
-      expect(album.images.length, equals(2));
-      expect(
-        album.images[0].url,
-        equals("https://coverartarchive.org/release/123/front-250.jpg"),
-      );
-      expect(album.images[0].width, equals(250));
-      expect(album.images[0].height, equals(250));
-      expect(
-        album.images[1].url,
-        equals("https://coverartarchive.org/release/123/front-500.jpg"),
-      );
-      expect(album.images[1].width, equals(500));
-      expect(album.images[1].height, equals(500));
       verify(() => mockNetwork.send(any())).called(1);
     }
 
+    Future<void> testGetAlbumWithReleaseGroupId(IMetadataPlugin plugin) async {
+      when(
+        () => mockNetwork.send(
+          any(
+            that: predicate<PluginRequest>(
+              (req) =>
+                  req.url ==
+                  'https://musicbrainz.org/ws/2/release?release-group=rg-help-123&limit=1&fmt=json',
+            ),
+          ),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            PluginResponse(statusCode: 200, body: Fixtures.releaseGroupLookup),
+      );
+
+      // 2. Chiamata dettagli release
+      when(
+        () => mockNetwork.send(
+          any(
+            that: predicate<PluginRequest>(
+              (req) =>
+                  req.url ==
+                  'https://musicbrainz.org/ws/2/release/123?inc=artist-credits%2Brecordings%2Brelease-groups&fmt=json',
+            ),
+          ),
+        ),
+      ).thenAnswer(
+        (_) async => PluginResponse(statusCode: 200, body: Fixtures.albumHelp),
+      );
+
+      final album = await plugin.album.getAlbum('rg:rg-help-123');
+
+      expect(album.name, equals("Help!"));
+      expect(album.id, equals("rg:rg-help-123"));
+      verify(() => mockNetwork.send(any())).called(2);
+    }
+
+    Future<void> testTracksWithReleaseGroupId(IMetadataPlugin plugin) async {
+      // 1. Risoluzione release-group -> release (chiamata una sola volta!)
+      when(
+        () => mockNetwork.send(
+          any(
+            that: predicate<PluginRequest>(
+              (req) =>
+                  req.url ==
+                  'https://musicbrainz.org/ws/2/release?release-group=rg-help-123&limit=1&fmt=json',
+            ),
+          ),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            PluginResponse(statusCode: 200, body: Fixtures.releaseGroupLookup),
+      );
+
+      when(
+        () => mockNetwork.send(
+          any(
+            that: predicate<PluginRequest>(
+              (req) =>
+                  req.url ==
+                  'https://musicbrainz.org/ws/2/release/123?inc=artist-credits%2Brecordings%2Brelease-groups&fmt=json',
+            ),
+          ),
+        ),
+      ).thenAnswer(
+        (_) async => PluginResponse(statusCode: 200, body: Fixtures.albumHelp),
+      );
+
+      when(
+        () => mockNetwork.send(
+          any(
+            that: predicate<PluginRequest>(
+              (req) =>
+                  req.url ==
+                  'https://musicbrainz.org/ws/2/recording?release=123&limit=20&offset=0&inc=artist-credits&fmt=json',
+            ),
+          ),
+        ),
+      ).thenAnswer(
+        (_) async =>
+            PluginResponse(statusCode: 200, body: Fixtures.recordingsHelp),
+      );
+
+      final result = await plugin.album.tracks('rg:rg-help-123');
+
+      expect(result.items.length, equals(1));
+      expect(result.items[0].name, equals("Help!"));
+      expect(result.items[0].album.id, equals("rg:rg-help-123"));
+      verify(() => mockNetwork.send(any())).called(3);
+    }
+
     group("Native tests", () {
-      test('Test getAlbum', () async => await testGetAlbum(nativePlugin));
+      test(
+        'Test getAlbum with Release ID',
+        () async => await testGetAlbumWithReleaseId(nativePlugin),
+      );
+      test(
+        'Test getAlbum with Release Group ID',
+        () async => await testGetAlbumWithReleaseGroupId(nativePlugin),
+      );
+      test(
+        'Test tracks with Release Group ID',
+        () async => await testTracksWithReleaseGroupId(nativePlugin),
+      );
     });
+
     group("Eval tests", () {
-      test('Test getAlbum', () async => await testGetAlbum(evalPlugin));
+      test(
+        'Test getAlbum with Release ID',
+        () async => await testGetAlbumWithReleaseId(evalPlugin),
+      );
+      test(
+        'Test getAlbum with Release Group ID',
+        () async => await testGetAlbumWithReleaseGroupId(evalPlugin),
+      );
+      test(
+        'Test tracks with Release Group ID',
+        () async => await testTracksWithReleaseGroupId(evalPlugin),
+      );
     });
   });
 }

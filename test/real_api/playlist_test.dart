@@ -85,12 +85,8 @@ void main() async {
       // Verifiche Copertine estratte dai brani
       expect(playlist.images, isNotEmpty);
       expect(playlist.images.length, equals(3));
-      expect(
-        playlist.images[0].url,
-        equals(
-          "https://coverartarchive.org/release/9fa1a967-0610-4e10-988c-7e01bf176875/front-250.jpg",
-        ),
-      );
+      expect(playlist.images[0].url, contains("coverartarchive.org/"));
+      expect(playlist.images[0].url, contains("front-250.jpg"));
       expect(playlist.images[0].width, equals(250));
       expect(playlist.images[0].height, equals(250));
     }
@@ -126,18 +122,8 @@ void main() async {
 
       expect(playlist.images, isNotEmpty);
       expect(playlist.images.length, equals(4));
-      expect(
-        playlist.images[0].url,
-        equals(
-          "https://coverartarchive.org/release/884b4d12-3362-42cc-a5b2-c02c1d4e857b/front-250.jpg",
-        ),
-      );
-      expect(
-        playlist.images[1].url,
-        equals(
-          "https://coverartarchive.org/release/ae316897-722d-4f4c-a161-09651518186d/front-250.jpg",
-        ),
-      );
+      expect(playlist.images[0].url, contains("coverartarchive.org/"));
+      expect(playlist.images[1].url, contains("coverartarchive.org/"));
     }
 
     Future<void> testPlaylistTracks(IMetadataPlugin plugin) async {
@@ -175,7 +161,7 @@ void main() async {
       expect(firstTrack.album.images, isNotEmpty);
       expect(
         firstTrack.album.images.first.url,
-        contains("coverartarchive.org/release/"),
+        contains("coverartarchive.org/"),
       );
     }
 

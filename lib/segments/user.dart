@@ -473,7 +473,7 @@ class MusicbrainzUser extends IUser {
 
             items.add(
               Album(
-                id: albumId,
+                id: "rg:$albumId",
                 name: albumData['title'] as String,
                 artists: artists,
                 images: [
@@ -514,11 +514,12 @@ class MusicbrainzUser extends IUser {
   }
 
   Future<void> saveAlbum({required String id}) async {
+    final String cleanId = id.startsWith('rg:') ? id.substring(3) : id;
     final String playlistMbid = await _getOrCreatePlaylist(albumPlaylistName);
 
     final Map albumData = await _host.fetchApi(
       baseUrl: MusicbrainzPlugin.mbUrl,
-      path: "release-group/$id",
+      path: "release-group/$cleanId",
       query: {'fmt': 'json', 'inc': 'artist-credits'},
     );
 
@@ -545,7 +546,7 @@ class MusicbrainzUser extends IUser {
         'playlist': {
           'track': [
             {
-              'identifier': "https://musicbrainz.org/recording/$id",
+              'identifier': "https://musicbrainz.org/recording/$cleanId",
               'title': title,
               'creator': artistName,
             },
@@ -561,6 +562,7 @@ class MusicbrainzUser extends IUser {
   }
 
   Future<void> unsaveAlbum({required String id}) async {
+    final String cleanId = id.startsWith('rg:') ? id.substring(3) : id;
     final String playlistMbid = await _getOrCreatePlaylist(albumPlaylistName);
     final Map<String, String> headers = {};
     if (_auth.token != "") {
@@ -583,7 +585,7 @@ class MusicbrainzUser extends IUser {
       final identifiers = track['identifier'];
       if (identifiers != null) {
         final String identifier = identifiers[0] as String;
-        if (identifier.contains(id)) {
+        if (identifier.contains(cleanId)) {
           reversedIndices.insert(0, index);
         }
       }

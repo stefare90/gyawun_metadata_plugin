@@ -95,31 +95,37 @@ class MusicbrainzPlaylist extends IPlaylist {
     final ext = trackObj['extension'];
     if (ext != null) {
       final mbExt = ext['https://musicbrainz.org/doc/jspf#track'];
-      if (mbExt != null) {
-        final addMeta = mbExt['additional_metadata'];
-        if (addMeta != null) {
-          final caaMbid = addMeta['caa_release_mbid'];
-          if (caaMbid != null) {
-            final s = caaMbid.toString();
-            if (s != "null" && s != "") return s;
+      if (mbExt != null && mbExt is Map) {
+        if (mbExt.containsKey('release_group_mbid')) {
+          final directGroupMbid = mbExt['release_group_mbid'];
+          if (directGroupMbid != null) {
+            final s = directGroupMbid.toString();
+            if (s != "null" && s != "") return "rg:$s";
           }
         }
-        final directMbid = mbExt['release_mbid'];
-        if (directMbid != null) {
-          final s = directMbid.toString();
-          if (s != "null" && s != "") return s;
+        if (mbExt.containsKey('additional_metadata')) {
+          final addMeta = mbExt['additional_metadata'];
+          if (addMeta != null) {
+            final caaMbid = addMeta['caa_release_mbid'];
+            if (caaMbid != null) {
+              final s = caaMbid.toString();
+              if (s != "null" && s != "") return s;
+            }
+          }
         }
-        final directGroupMbid = mbExt['release_group_mbid'];
-        if (directGroupMbid != null) {
-          final s = directGroupMbid.toString();
-          if (s != "null" && s != "") return s;
+        if (mbExt.containsKey('release_mbid')) {
+          final directMbid = mbExt['release_mbid'];
+          if (directMbid != null) {
+            final s = directMbid.toString();
+            if (s != "null" && s != "") return s;
+          }
         }
       }
     }
     return '';
   }
 
-  List<Image> _extractTrackImages(dynamic trackObj, String releaseMbid) {
+  List<Image> _extractTrackImages(dynamic trackObj, String albumId) {
     final List<Image> images = [];
     if (trackObj.containsKey('image') && trackObj['image'] != null) {
       final imageVal = trackObj['image'];
@@ -129,17 +135,21 @@ class MusicbrainzPlaylist extends IPlaylist {
         return images;
       }
     }
-    if (releaseMbid.isNotEmpty && releaseMbid != "null") {
+    if (albumId.isNotEmpty && albumId != "null") {
+      final isRg = albumId.startsWith('rg:');
+      final cleanMbid = isRg ? albumId.substring(3) : albumId;
+      final endpoint = isRg ? "release-group" : "release";
+
       images.add(
         Image(
-          url: "https://coverartarchive.org/release/$releaseMbid/front-250.jpg",
+          url: "https://coverartarchive.org/$endpoint/$cleanMbid/front-250.jpg",
           width: 250,
           height: 250,
         ),
       );
       images.add(
         Image(
-          url: "https://coverartarchive.org/release/$releaseMbid/front-500.jpg",
+          url: "https://coverartarchive.org/$endpoint/$cleanMbid/front-500.jpg",
           width: 500,
           height: 500,
         ),
@@ -147,7 +157,7 @@ class MusicbrainzPlaylist extends IPlaylist {
       images.add(
         Image(
           url:
-              "https://coverartarchive.org/release/$releaseMbid/front-1200.jpg",
+              "https://coverartarchive.org/$endpoint/$cleanMbid/front-1200.jpg",
           width: 1200,
           height: 1200,
         ),
@@ -217,10 +227,13 @@ class MusicbrainzPlaylist extends IPlaylist {
         if (trackObj != null && playlistImages.length < 4) {
           final albumMbid = _extractAlbumMbid(trackObj);
           if (albumMbid.isNotEmpty) {
+            final isRg = albumMbid.startsWith('rg:');
+            final cleanMbid = isRg ? albumMbid.substring(3) : albumMbid;
+            final endpoint = isRg ? "release-group" : "release";
             playlistImages.add(
               Image(
                 url:
-                    "https://coverartarchive.org/release/$albumMbid/front-250.jpg",
+                    "https://coverartarchive.org/$endpoint/$cleanMbid/front-250.jpg",
                 width: 250,
                 height: 250,
               ),
@@ -285,8 +298,11 @@ class MusicbrainzPlaylist extends IPlaylist {
             final albumMbid = _extractAlbumMbid(track);
             final albumImages = _extractTrackImages(track, albumMbid);
             final durationMs = _extractTrackDurationMs(track);
-            final releaseUri = (albumMbid.isNotEmpty && albumMbid != "null")
-                ? "${MusicbrainzPlugin.mbUriBase}release/$albumMbid"
+            final isRg = albumMbid.startsWith('rg:');
+            final cleanMbid = isRg ? albumMbid.substring(3) : albumMbid;
+            final endpoint = isRg ? "release-group" : "release";
+            final releaseUri = (cleanMbid.isNotEmpty && cleanMbid != "null")
+                ? "${MusicbrainzPlugin.mbUriBase}$endpoint/$cleanMbid"
                 : "";
             final album = Album(
               id: albumMbid,
@@ -620,9 +636,12 @@ class MusicbrainzPlaylist extends IPlaylist {
             final albumMbid = _extractAlbumMbid(track);
             final albumImages = _extractTrackImages(track, albumMbid);
             final durationMs = _extractTrackDurationMs(track);
+            final isRg = albumMbid.startsWith('rg:');
+            final cleanMbid = isRg ? albumMbid.substring(3) : albumMbid;
+            final endpoint = isRg ? "release-group" : "release";
             final String releaseUri =
-                (albumMbid.isNotEmpty && albumMbid != "null")
-                ? "${MusicbrainzPlugin.mbUriBase}release/$albumMbid"
+                (cleanMbid.isNotEmpty && cleanMbid != "null")
+                ? "${MusicbrainzPlugin.mbUriBase}$endpoint/$cleanMbid"
                 : "";
             final Album album = Album(
               id: albumMbid,
