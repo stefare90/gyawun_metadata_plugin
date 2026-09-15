@@ -46,7 +46,7 @@ class MusicbrainzPlugin extends IMetadataPlugin {
     _browse = MusicbrainzBrowse(host, _user);
     _core = MusicbrainzCore();
     _playlist = MusicbrainzPlaylist(host, _user);
-    _search = MusicbrainzSearch();
+    _search = MusicbrainzSearch(host);
     _track = MusicbrainzTrack(host, _user);
   }
 

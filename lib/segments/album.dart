@@ -68,8 +68,12 @@ class MusicbrainzAlbum extends IAlbum {
 
     String finalId = releaseData['id'] as String;
     AlbumType albumType = AlbumType.album;
-    final rg = releaseData['release-group'];
-    if (rg != null && rg is Map) {
+    final rgRaw = releaseData['release-group'];
+    Map? rg;
+    if (rgRaw != null) {
+      rg = rgRaw as Map;
+    }
+    if (rg != null) {
       if (rg['id'] != null) {
         finalId = "rg:${rg['id']}";
       }
@@ -81,6 +85,42 @@ class MusicbrainzAlbum extends IAlbum {
         albumType = AlbumType.single;
       } else if (primaryType == 'compilation') {
         albumType = AlbumType.compilation;
+      }
+    }
+
+    if (images.isEmpty) {
+      if (rg != null && rg['id'] != null) {
+        final String rgId = rg['id'] as String;
+        images.add(
+          Image(
+            url: "https://coverartarchive.org/release-group/$rgId/front-250.jpg",
+            width: 250,
+            height: 250,
+          ),
+        );
+        images.add(
+          Image(
+            url: "https://coverartarchive.org/release-group/$rgId/front-500.jpg",
+            width: 500,
+            height: 500,
+          ),
+        );
+      } else if (releaseData['id'] != null) {
+        final String relId = releaseData['id'] as String;
+        images.add(
+          Image(
+            url: "https://coverartarchive.org/release/$relId/front-250.jpg",
+            width: 250,
+            height: 250,
+          ),
+        );
+        images.add(
+          Image(
+            url: "https://coverartarchive.org/release/$relId/front-500.jpg",
+            width: 500,
+            height: 500,
+          ),
+        );
       }
     }
 

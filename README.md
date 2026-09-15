@@ -56,6 +56,14 @@ Open **`plugin.json`** and define your plugin's metadata:
 ## 2. Implement the Logic (`lib/`)
 Implement the interfaces provided by the SDK.
 
+### Implemented Interfaces
+- **`IAlbum`**: Album and release-group fetching, tracks retrieval, cover art lookup via Cover Art Archive.
+- **`IArtist`**: Artist profile, genres, wikidata image integration, discography and release-groups.
+- **`IBrowse`**: Curated/algorithmic recommendations and radios via ListenBrainz API.
+- **`ITrack`**: Track details and radio discovery. Embedded album metadata provides direct cover art images from Cover Art Archive.
+- **`IUser` / `IAuth`**: ListenBrainz token authentication and personal library synchronization.
+- **`ISearch`**: Search functionality querying MusicBrainz live web services.
+
 #### ⚠️ Essential SDK Rules & Entry Point Contract:
 1. **Entry Point Contract**: `lib/main.dart` **must** export a top-level function with the exact signature:
    ```dart
