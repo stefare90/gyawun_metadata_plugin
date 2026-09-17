@@ -13,7 +13,7 @@ This repository provides a complete environment to develop, test, and compile me
 | 📁 **`lib/`** | **Plugin Core.** Logic for fetching and parsing metadata. `lib/main.dart` exposes `getPlugin`. |
 | 📁 **`test/mock_api/`** | **Logic & Bridge Tests.** Fast, deterministic tests using `mocktail`. Tests both Native and `dart_eval` Bytecode environments side-by-side. |
 | 📁 **`test/real_api/`** | **E2E Validation.** Tests against live external API servers. Also tests both Native and Bytecode environments.|
-| 📁 **`tool/`** | **Build System.** Scripts to compile Dart source code into `.evc` bytecode. |
+| 📁 **`tool/`** | **Build System.** `build_plugin.dart` compiles Dart sources into `.evc` bytecode; `package_plugin.dart` compiles and bundles `plugin.evc` + `plugin.json` into `plugin.zip`. |
 | 📄 **`plugin.json`** | **Manifest.** Plugin identity, capabilities, and SDK compatibility metadata. |
 
 ---
@@ -77,6 +77,7 @@ Implement the interfaces provided by the SDK.
    - Use standard `for-in` loops with explicit list typing before iteration.
    - Always `extend` rather than `implement` SDK Bridge classes.
    - **Explicit `Map` Casting**: Always cast dynamic JSON objects to `Map` (`final Map map = dynamicObj as Map;`) before invoking `Map` methods (e.g. `.containsKey()`) to prevent internal `$Map` wrapper failures in `dart_eval`.
+   - **No `try/catch` around `await`**: in the `dart_eval` bytecode sandbox a `try/catch` wrapping an `await` corrupts the async frame (`type '$null' is not a subtype of type '$Future<dynamic>'`). Prefer non-throwing helpers (e.g. `HostTools.fetchApiOrNull`) and status/shape checks for graceful degradation.
 
 ---
 
@@ -107,14 +108,22 @@ dart test test/real_api/
 
 ## 📦 Exporting & Packaging for Distribution
 
-When both Mock and Real API tests pass successfully:
+When both Mock and Real API tests pass successfully, run the packaging tool from the project root:
 
-1. Re-run `dart run tool/build_plugin.dart` to guarantee `plugin.evc` is up to date.
-2. Prepare the root files to bundle into your zip archive:
-   - `plugin.json` (manifest)
-   - `plugin.evc` (compiled bytecode)
-3. Create a `.zip` archive containing these root files (e.g., `musicbrainz_plugin.zip`).
-4. **Distribution Options**:
+```bash
+# from the gyawun_metadata_plugin/ directory
+dart run tool/package_plugin.dart
+```
+
+It compiles `lib/` into `plugin.evc` and then packages `plugin.evc` + `plugin.json` into `plugin.zip`, with **both files at the archive root** (no subfolder) — exactly the layout the Host App expects. The ZIP is written in pure Dart (stored, no compression), so **no external `zip`/`python` tool is required** on any OS.
+
+If you only need the bytecode (e.g. before running the test suites), use:
+
+```bash
+dart run tool/build_plugin.dart   # generates plugin.evc only
+```
+
+**Distribution Options**:
    - **Local Import**: Load the `.zip` directly into the Host App using the File Picker.
    - **GitHub Release**: Attach the `.zip` archive to a GitHub Release in your repository. The Host App will automatically discover and download it via the GitHub REST API!
 ---
