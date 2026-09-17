@@ -112,13 +112,16 @@ void main() async {
       expect(savedArtistsBefore.items, isA<List<Artist>>());
 
       bool artistFoundBefore = false;
+      bool artistHasImagesBefore = false;
       for (var i = 0; i < savedArtistsBefore.items.length; i++) {
         if (savedArtistsBefore.items[i].id == testArtistId) {
           artistFoundBefore = true;
+          artistHasImagesBefore = savedArtistsBefore.items[i].images.isNotEmpty;
           break;
         }
       }
       expect(artistFoundBefore, isTrue);
+      expect(artistHasImagesBefore, isTrue);
 
       await plugin.artist.unsave([testArtistId]);
 

@@ -46,7 +46,10 @@ void main() async {
       expect(track.name, isNotEmpty);
       expect(track.artists, isNotEmpty);
       expect(track.artists.first.name, isNotEmpty);
-      expect(track.externalUri, startsWith('https://musicbrainz.org/recording/'));
+      expect(
+        track.externalUri,
+        startsWith('https://musicbrainz.org/recording/'),
+      );
       expect(track.album.images, isNotEmpty);
       expect(track.album.images.first.url, contains('coverartarchive.org'));
     }
@@ -68,7 +71,11 @@ void main() async {
     }
 
     Future<void> testArtists(IMetadataPlugin plugin) async {
-      final result = await plugin.search.artists('The Beatles', limit: 5, offset: 0);
+      final result = await plugin.search.artists(
+        'The Beatles',
+        limit: 5,
+        offset: 0,
+      );
 
       expect(result, isA<PaginatedResult<Artist>>());
       expect(result.limit, equals(5));
@@ -80,6 +87,39 @@ void main() async {
       expect(artist.id, isNotEmpty);
       expect(artist.name, isNotEmpty);
       expect(artist.externalUri, startsWith('https://musicbrainz.org/artist/'));
+    }
+
+    Future<void> testArtistImages(IMetadataPlugin plugin) async {
+      final result = await plugin.search.artists(
+        'Radiohead',
+        limit: 5,
+        offset: 0,
+      );
+
+      expect(result.items, isNotEmpty);
+
+      bool found = false;
+      for (final artist in result.items) {
+        if (artist.images.isNotEmpty) {
+          found = true;
+          expect(artist.images.length, equals(4));
+          final List<int?> widths = [];
+          for (final image in artist.images) {
+            widths.add(image.width);
+          }
+          expect(widths, equals(<int>[56, 250, 500, 1000]));
+          expect(
+            artist.images.first.url,
+            startsWith('https://commons.wikimedia.org/wiki/Special:FilePath/'),
+          );
+          expect(artist.images.first.url, contains('width=56'));
+        }
+      }
+      expect(
+        found,
+        isTrue,
+        reason: 'A known artist (Radiohead) must expose at least one image',
+      );
     }
 
     Future<void> testPlaylists(IMetadataPlugin plugin) async {
@@ -111,6 +151,10 @@ void main() async {
       test('Test tracks', () async => await testTracks(nativePlugin));
       test('Test albums', () async => await testAlbums(nativePlugin));
       test('Test artists', () async => await testArtists(nativePlugin));
+      test(
+        'Test artist images',
+        () async => await testArtistImages(nativePlugin),
+      );
       test('Test playlists', () async => await testPlaylists(nativePlugin));
       test('Test all', () async => await testAll(nativePlugin));
     });
@@ -120,6 +164,10 @@ void main() async {
       test('Test tracks', () async => await testTracks(evalPlugin));
       test('Test albums', () async => await testAlbums(evalPlugin));
       test('Test artists', () async => await testArtists(evalPlugin));
+      test(
+        'Test artist images',
+        () async => await testArtistImages(evalPlugin),
+      );
       test('Test playlists', () async => await testPlaylists(evalPlugin));
       test('Test all', () async => await testAll(evalPlugin));
     });
