@@ -1,0 +1,8 @@
+# pi config files
+.pi
+.pi/*
+AGENTS.md
+PLAN.md
+
+# build artifacts
+.dart_tool/
