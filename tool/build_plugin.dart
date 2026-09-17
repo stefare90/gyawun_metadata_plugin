@@ -1,32 +1,34 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:dart_eval/dart_eval.dart';
 import 'package:gyawun_metadata_sdk/eval/eval_plugin.dart';
 import 'package:path/path.dart' as p;
 
-void main() async {
-  final compiler = Compiler();
+/// Compiles `lib/` into dart_eval bytecode and writes `plugin.evc`.
+///
+/// Run from the project root:
+/// `dart run tool/build_plugin.dart`
+void main() {
+  final bytes = compilePlugin();
+  File('plugin.evc').writeAsBytesSync(bytes);
+  print('✅ Success! Generated plugin.evc (${bytes.length} bytes)');
+}
 
-  // 1. Configure bridge bindings for compilation
+/// Compiles the plugin sources under `lib/` to dart_eval bytecode.
+///
+/// Uses the project-local `dart_eval` version and registers the SDK bridge
+/// (`GyawunMetadataSdkPlugin`), exactly like the test suites expect.
+Uint8List compilePlugin() {
+  final compiler = Compiler();
   final metadataBridge = GyawunMetadataSdkPlugin();
   compiler.addPlugin(metadataBridge);
 
-  // 2. Loading source files
   print('--- Loading source files ---');
   final pluginSources = _loadSources(p.join(Directory.current.path, 'lib'));
 
-  // 3. Bytecode compilation
   print('--- Compiling Bytecode (.evc) ---');
-  try {
-    // Define the two packages within the compiler's Virtual File System (VFS)
-    final program = compiler.compile({'gyawun_metadata_plugin': pluginSources});
-
-    final bytes = program.write();
-    File('plugin.evc').writeAsBytesSync(bytes);
-
-    print('✅ Success! Generated plugin.evc (${bytes.length} bytes)');
-  } catch (e) {
-    print('❌ Compilation error: $e');
-  }
+  final program = compiler.compile({'gyawun_metadata_plugin': pluginSources});
+  return program.write();
 }
 
 /// Helper function to scan a directory and map files for the compiler
@@ -41,8 +43,7 @@ Map<String, String> _loadSources(String rootPath) {
 
   for (var file in dir.listSync(recursive: true).whereType<File>()) {
     if (file.path.endsWith('.dart')) {
-      // Calculate the relative path from the root (e.g., metadata/models.dart)
-      // and ensure forward slashes are used for cross-platform compatibility
+      // Relative path with forward slashes, so the VFS keys are platform-agnostic.
       final relativePath = p
           .relative(file.path, from: rootPath)
           .replaceAll('\\', '/');
