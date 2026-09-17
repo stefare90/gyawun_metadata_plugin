@@ -3,6 +3,7 @@ import 'package:gyawun_metadata_plugin/plugin.dart';
 import 'package:gyawun_metadata_plugin/segments/auth.dart';
 import 'package:gyawun_metadata_plugin/segments/host_tools.dart';
 import 'package:gyawun_metadata_plugin/segments/track.dart';
+import 'package:gyawun_metadata_plugin/segments/wikidata_images.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/iuser.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/album.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/artist.dart';
@@ -18,9 +19,10 @@ class MusicbrainzUser extends IUser {
   final String albumPlaylistName = "__GYAWUN_ALBUMS__";
   final String artistPlaylistName = "__GYAWUN_ARTISTS__";
   final HostTools _host;
+  final WikidataArtistImages _images;
   String userId = "";
 
-  MusicbrainzUser(this._auth, this._host);
+  MusicbrainzUser(this._auth, this._host, this._images);
 
   String get token => _auth.token;
 
@@ -391,8 +393,10 @@ class MusicbrainzUser extends IUser {
       }
     }
 
+    final List<Artist> enriched = await _images.enrich(items);
+
     return PaginatedResult<Artist>(
-      items: items,
+      items: enriched,
       total: totalCount,
       offset: offset,
       limit: limit,

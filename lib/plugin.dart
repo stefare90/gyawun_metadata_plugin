@@ -7,6 +7,7 @@ import 'package:gyawun_metadata_plugin/segments/playlist.dart';
 import 'package:gyawun_metadata_plugin/segments/search.dart';
 import 'package:gyawun_metadata_plugin/segments/track.dart';
 import 'package:gyawun_metadata_plugin/segments/user.dart';
+import 'package:gyawun_metadata_plugin/segments/wikidata_images.dart';
 import 'package:gyawun_metadata_plugin/segments/album.dart';
 import 'package:gyawun_metadata_sdk/metadata/host_env.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/ialbum.dart';
@@ -39,14 +40,15 @@ class MusicbrainzPlugin extends IMetadataPlugin {
 
   MusicbrainzPlugin({required this.hostEnv}) {
     final host = HostTools(hostEnv);
+    final images = WikidataArtistImages(host);
     _auth = MusicbrainzAuth(host);
-    _user = MusicbrainzUser(_auth, host);
+    _user = MusicbrainzUser(_auth, host, images);
     _album = MusicbrainzAlbum(host, _user);
-    _artist = MusicbrainzArtist(host, _user);
+    _artist = MusicbrainzArtist(host, _user, images);
     _browse = MusicbrainzBrowse(host, _user);
     _core = MusicbrainzCore();
     _playlist = MusicbrainzPlaylist(host, _user);
-    _search = MusicbrainzSearch(host);
+    _search = MusicbrainzSearch(host, images);
     _track = MusicbrainzTrack(host, _user);
   }
 

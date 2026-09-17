@@ -2,6 +2,7 @@ import 'package:gyawun_metadata_plugin/plugin.dart';
 import 'package:gyawun_metadata_plugin/segments/album.dart';
 import 'package:gyawun_metadata_plugin/segments/host_tools.dart';
 import 'package:gyawun_metadata_plugin/segments/track.dart';
+import 'package:gyawun_metadata_plugin/segments/wikidata_images.dart';
 import 'package:gyawun_metadata_sdk/metadata/interfaces/isearch.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/album.dart';
 import 'package:gyawun_metadata_sdk/metadata/models/artist.dart';
@@ -12,8 +13,9 @@ import 'package:gyawun_metadata_sdk/metadata/models/track.dart';
 
 class MusicbrainzSearch extends ISearch {
   final HostTools _host;
+  final WikidataArtistImages _images;
 
-  MusicbrainzSearch(this._host);
+  MusicbrainzSearch(this._host, this._images);
 
   @override
   List<String> chips() {
@@ -171,8 +173,10 @@ class MusicbrainzSearch extends ISearch {
       }
     }
 
+    final List<Artist> enriched = await _images.enrich(items);
+
     return PaginatedResult<Artist>(
-      items: items,
+      items: enriched,
       total: total,
       offset: offset,
       limit: limit,
