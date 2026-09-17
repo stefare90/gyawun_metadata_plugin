@@ -28,8 +28,15 @@ void main() async {
 
     void testChips(IMetadataPlugin plugin) {
       final chips = plugin.search.chips();
-      expect(chips, isA<List<String>>());
-      expect(chips, equals(['Tracks', 'Albums', 'Artists']));
+      expect(chips, isA<List<SearchCategory>>());
+      expect(
+        chips,
+        equals(<SearchCategory>[
+          SearchCategory.tracks,
+          SearchCategory.albums,
+          SearchCategory.artists,
+        ]),
+      );
     }
 
     Future<void> testTracks(IMetadataPlugin plugin) async {

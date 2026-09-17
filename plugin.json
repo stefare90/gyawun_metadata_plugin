@@ -4,7 +4,7 @@
   "type": "metadata",
   "name": "MusicBrainz & ListenBrainz",
   "version": "2.0.6",
-  "pluginSdkVersion": "2.0.0",
+  "pluginSdkVersion": "3.0.0",
   "author": "MusicAre Team",
   "description": "Metadata, recommendations, and user library provided by MusicBrainz and ListenBrainz.",
   "repository": "https://github.com/stefare90/gyawun_metadata_plugin"

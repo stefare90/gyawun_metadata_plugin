@@ -30,7 +30,7 @@ Open **`plugin.json`** and define your plugin's metadata:
   "type": "metadata",
   "name": "MusicBrainz & ListenBrainz",
   "version": "1.0.0",
-  "pluginSdkVersion": "1.0.0",
+  "pluginSdkVersion": "3.0.0",
   "author": "Your Name / Organization",
   "description": "Metadata, recommendations, and user library provided by MusicBrainz and ListenBrainz.",
   "repository": "https://github.com/your_org/your_plugin_repo"

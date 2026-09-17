@@ -18,8 +18,12 @@ class MusicbrainzSearch extends ISearch {
   MusicbrainzSearch(this._host, this._images);
 
   @override
-  List<String> chips() {
-    return ['Tracks', 'Albums', 'Artists'];
+  List<SearchCategory> chips() {
+    return const [
+      SearchCategory.tracks,
+      SearchCategory.albums,
+      SearchCategory.artists,
+    ];
   }
 
   @override
