@@ -1,3 +1,14 @@
+> **⚠️ Superseded / archived — read-only, kept as history.**
+> The Dart/`dart_eval` metadata path was abandoned: in `dart_eval` 0.8.5 an asynchronous error
+> is not catchable, so that class of bug was unsolvable in the sandbox (plus 6,920 lines of
+> generated bindings patched by hand). The metadata system now lives in
+> **`musicare_metadata_musicbrainz_plugin`** (the Python plugin) and **`musicare_plugin_sdk`**
+> (the platform: Dart SDK `musicare_metadata_host_sdk`, Python SDK `musicare_metadata_plugin_sdk`,
+> wire protocol in `contract/PROTOCOL.md`). This code stays exactly as it is, as a historical
+> reference — including the tests that import the old SDK's `eval` bindings: do **not** touch or "fix" them.
+
+---
+
 # 🧩 Gyawun Metadata Plugin - Template
 
 Welcome to the official template for creating hot-swappable plugins for the **Gyawun** app ecosystem.
